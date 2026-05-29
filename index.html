@@ -279,121 +279,99 @@
 </div>
 
 <script>
-const ROLE={
-  hq:{label:"總部",bg:"#e7f6ee",fg:"#0a6f62"},
-  supervisor:{label:"主管",bg:"#e8f0f2",fg:"#34727f"},
-  station:{label:"站所",bg:"#eef2f3",fg:"#516067"}
-};
-/* 帳號（正式版改為 Supabase）。密碼僅雛形示範。stations=可存取站所，總部留空＝全部 */
-let accounts=[
-  {user:"admin", name:"系統管理員", role:"hq", stations:[], pw:"admin123"},
-];
-let session=null,editingId=null,editingAcct=null,mailId=null,filter="all",nextId=10000,dataMode="demo";
+
+/* ====== 設定：把你的 Apps Script 網頁應用程式網址貼在這裡（結尾是 /exec） ====== */
+const API_URL = "https://script.google.com/macros/s/AKfycbxdXyZ_8BDjae8oKMovo2DsdMIylgW9MY16_kfkavna97PmaLZJqVEdX5eIydPJTV9n/exec";
+
+const ROLE={hq:{label:"總部",bg:"#e7f6ee",fg:"#0a6f62"},supervisor:{label:"主管",bg:"#e8f0f2",fg:"#34727f"},station:{label:"站所",bg:"#eef2f3",fg:"#516067"}};
+let token=null,me=null,vehicles=[],accounts=[],editingId=null,editingAcct=null,mailId=null,filter="all";
 
 const today=new Date();today.setHours(0,0,0,0);
-const off=d=>{const x=new Date(today);x.setDate(x.getDate()+d);return x.toISOString().slice(0,10);};
-
-let vehicles=[
-  {no:1,plate:"DEMO-001",station:"NS2",inspDate:off(-3),validDate:off(-3),type:"5T",extinguisherExpiry:off(10),notified:true,secondNotice:true,licenseSent:false,licenseReturned:false,note:""},
-  {no:2,plate:"DEMO-002",station:"DC3",inspDate:off(4),validDate:off(730),type:"1.9T",extinguisherExpiry:off(60),notified:true,secondNotice:false,licenseSent:false,licenseReturned:false,note:""},
-  {no:3,plate:"DEMO-003",station:"CS12",inspDate:off(12),validDate:"免定換",type:"1.9T",extinguisherExpiry:off(5),notified:false,secondNotice:false,licenseSent:false,licenseReturned:false,note:"滅火器即將到期"},
-  {no:4,plate:"DEMO-004",station:"TS1",inspDate:off(26),validDate:off(700),type:"8T",extinguisherExpiry:off(400),notified:false,secondNotice:false,licenseSent:false,licenseReturned:false,note:""},
-  {no:5,plate:"DEMO-005",station:"Nt17",inspDate:off(55),validDate:off(800),type:"1.9T",extinguisherExpiry:null,notified:false,secondNotice:false,licenseSent:false,licenseReturned:false,note:""},
-  {no:6,plate:"DEMO-006",station:"KS1",inspDate:off(120),validDate:off(820),type:"6.5T",extinguisherExpiry:null,notified:false,secondNotice:false,licenseSent:false,licenseReturned:false,note:""},
-];
-let auditLog=[];
-
 const $=id=>document.getElementById(id);
 const fmt=ts=>{const d=new Date(ts),p=n=>String(n).padStart(2,"0");return `${d.getFullYear()}/${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;};
 const daysTo=ymd=>Math.round((new Date(ymd)-today)/86400000);
 const isDate=v=>typeof v==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(v);
-
-function statusOf(v){const d=daysTo(v.inspDate);
-  if(d<0)return{key:"over",label:"已逾期",days:d};
-  if(d<=5)return{key:"urg",label:"5天內",days:d};
-  if(d<=30)return{key:"soon",label:"30天內",days:d};
-  return{key:"ok",label:"正常",days:d};}
+function statusOf(v){const d=daysTo(v.inspDate);if(d<0)return{key:"over",label:"已逾期",days:d};if(d<=5)return{key:"urg",label:"5天內",days:d};if(d<=30)return{key:"soon",label:"30天內",days:d};return{key:"ok",label:"正常",days:d};}
 function extWarn(v){if(!isDate(v.extinguisherExpiry))return false;return daysTo(v.extinguisherExpiry)<daysTo(v.inspDate)+30;}
-function addLog(action,detail=""){auditLog.unshift({time:Date.now(),user:session?session.name:"系統",action,detail});}
+function canEditV(v){if(!me)return false;if(me.role==="hq")return true;if(me.role==="supervisor")return me.stations.indexOf(v.station)>=0;return false;}
+function canEdit(){return me&&me.role!=="station";}
+function canAccounts(){return me&&me.role==="hq";}
+function vget(id){return vehicles.find(v=>String(v.no)===String(id));}
 
-/* ---- 權限判斷 ---- */
-function canSeeV(v){if(!session)return true;if(session.role==="hq")return true;return session.stations.includes(v.station);}
-function canEdit(){return session&&session.role!=="station";}            // 站所唯讀
-function canEditV(v){if(!session)return false;if(session.role==="hq")return true;if(session.role==="supervisor")return session.stations.includes(v.station);return false;}
-function canAccounts(){return session&&session.role==="hq";}
-function visibleVehicles(){return vehicles.filter(canSeeV);}
+async function api(action,params){
+  if(!API_URL)throw new Error("尚未設定後端網址");
+  const res=await fetch(API_URL,{method:"POST",body:JSON.stringify(Object.assign({action},params||{}))});
+  return await res.json();
+}
 
-async function loadData(){
-  try{const res=await fetch("./data.json",{cache:"no-store"});if(!res.ok)throw 0;
-    const arr=await res.json();if(Array.isArray(arr)&&arr.length){vehicles=arr;dataMode="live";}
-  }catch(e){dataMode="demo";}
+async function doLogin(){
+  const u=$("u").value.trim(),p=$("p").value;
+  if(!API_URL){$("err").textContent="尚未設定後端網址：請在 index.html 最上方填入 Apps Script 網址";return;}
+  $("err").textContent="登入中…";
+  try{
+    const r=await api("login",{user:u,pw:p});
+    if(!r.ok){$("err").textContent=r.error||"登入失敗";return;}
+    token=r.token;me=r.me;$("err").textContent="";
+    $("login").classList.add("hide");$("app").classList.remove("hide");
+    $("who-name").textContent=me.name;
+    const role=ROLE[me.role]||ROLE.station;
+    $("who-role").innerHTML=`<span class="role-pill" style="background:${role.bg};color:${role.fg}">${role.label}</span>`;
+    $("who-scope").textContent=me.role==="hq"?"可存取：全部站所":("負責站所："+(me.stations.join("、")||"—"));
+    $("addBtn").classList.toggle("hide",!canEdit());
+    $("nav-acct").classList.toggle("hide",!canAccounts());
+    const p2=n=>String(n).padStart(2,"0");
+    $("today-label").textContent=`今日 ${today.getFullYear()}/${p2(today.getMonth()+1)}/${p2(today.getDate())}`;
+    await loadList();go("fleet");
+  }catch(e){$("err").textContent="無法連線到後端，請確認網址正確、且部署的存取權限為「任何人」";}
+}
+function doLogout(){token=null;me=null;vehicles=[];$("u").value="";$("p").value="";$("app").classList.add("hide");$("login").classList.remove("hide");}
+
+async function loadList(){
+  try{const r=await api("list",{token});if(r.ok){vehicles=r.vehicles||[];if(r.me)me=r.me;}else if(r.error){alert(r.error);}}
+  catch(e){alert("讀取資料失敗，請重新登入");}
+  populateFilters();render();
 }
 function populateFilters(){
-  const vis=visibleVehicles();
-  const st=[...new Set(vis.map(v=>v.station).filter(Boolean))].sort();
-  const ty=[...new Set(vis.map(v=>v.type).filter(Boolean))].sort();
+  const st=[...new Set(vehicles.map(v=>v.station).filter(Boolean))].sort();
+  const ty=[...new Set(vehicles.map(v=>v.type).filter(Boolean))].sort();
+  const c1=$("fStation").value,c2=$("fType").value;
   $("fStation").innerHTML='<option value="">所有站所</option>'+st.map(s=>`<option>${s}</option>`).join("");
   $("fType").innerHTML='<option value="">所有車種</option>'+ty.map(s=>`<option>${s}</option>`).join("");
+  $("fStation").value=c1;$("fType").value=c2;
 }
-
-function doLogin(){
-  const u=$("u").value.trim(),p=$("p").value,acc=accounts.find(a=>a.user===u&&a.pw===p);
-  if(!acc){$("err").textContent="帳號或密碼錯誤";return;}
-  session={id:acc.user,name:acc.name,role:acc.role,stations:acc.stations||[]};$("err").textContent="";addLog("登入");
-  $("login").classList.add("hide");$("app").classList.remove("hide");
-  $("who-name").textContent=acc.name;
-  const r=ROLE[acc.role];
-  $("who-role").innerHTML=`<span class="role-pill" style="background:${r.bg};color:${r.fg}">${r.label}</span>`;
-  $("who-scope").textContent=acc.role==="hq"?"可存取：全部站所":("負責站所："+(acc.stations.join("、")||"—"));
-  $("addBtn").classList.toggle("hide",!canEdit());
-  $("nav-acct").classList.toggle("hide",!canAccounts());
-  const p2=n=>String(n).padStart(2,"0");
-  $("today-label").textContent=`今日 ${today.getFullYear()}/${p2(today.getMonth()+1)}/${p2(today.getDate())}`;
-  populateFilters();go("fleet");render();
-}
-function doLogout(){addLog("登出");session=null;$("u").value="";$("p").value="";$("app").classList.add("hide");$("login").classList.remove("hide");}
-function go(page){
-  if(page==="acct"&&!canAccounts())return;
+function go(page){if(page==="acct"&&!canAccounts())return;
   ["fleet","log","acct"].forEach(pg=>$("page-"+pg).classList.toggle("hide",pg!==page));
   ["fleet","log","acct"].forEach(pg=>$("nav-"+pg).classList.toggle("active",pg===page));
-  if(page==="log"){addLog("檢視","歷程紀錄");renderLog();}
-  if(page==="acct"){renderAccounts();}
-}
+  if(page==="log")loadLog();if(page==="acct")loadAccounts();}
 function setFilter(f){filter=f;
   document.querySelectorAll(".chip").forEach(c=>c.classList.toggle("active",c.dataset.f===f));
   document.querySelectorAll(".stat").forEach(c=>c.classList.toggle("sel",c.dataset.f===f));
   go("fleet");render();}
 
 function render(){
-  const vis=visibleVehicles();
   let over=0,urg=0,soon=0;
-  vis.forEach(v=>{const s=statusOf(v);if(s.key==="over")over++;else if(s.key==="urg")urg++;else if(s.key==="soon")soon++;});
-  $("c-over").textContent=over;$("c-urg").textContent=urg;$("c-soon").textContent=soon;$("c-tot").textContent=vis.length;
-  $("dbbadge").className="databadge "+(dataMode==="live"?"db-live":"db-demo");
-  $("dbbadge").textContent=dataMode==="live"?"● 真實資料 data.json":"● 範例資料 (未載入 data.json)";
-  $("notice").innerHTML=dataMode==="live"
-    ?'資料來源：同資料夾的 <b>data.json</b>。此檔含機密，請勿放入公開 repo。'
-    :'目前顯示<b>內建範例</b>（index.html 不含機密，可安心上 GitHub）。把 <b>data.json</b> 放同資料夾並用 GitHub Pages 開啟即會載入真實資料。';
-
+  vehicles.forEach(v=>{const s=statusOf(v);if(s.key==="over")over++;else if(s.key==="urg")urg++;else if(s.key==="soon")soon++;});
+  $("c-over").textContent=over;$("c-urg").textContent=urg;$("c-soon").textContent=soon;$("c-tot").textContent=vehicles.length;
+  $("dbbadge").className="databadge db-live";$("dbbadge").textContent="● 已連線 Google Sheets";
+  $("notice").innerHTML='資料即時儲存在你的 Google 試算表，變更立即生效、所有人共用。';
   const fS=$("fStation").value,fT=$("fType").value,q=$("fSearch").value.trim().toUpperCase();
-  let list=vis.map(v=>({v,s:statusOf(v)}));
+  let list=vehicles.map(v=>({v,s:statusOf(v)}));
   if(filter!=="all")list=list.filter(x=>x.s.key===filter);
   if(fS)list=list.filter(x=>x.v.station===fS);
   if(fT)list=list.filter(x=>x.v.type===fT);
   if(q)list=list.filter(x=>(x.v.plate||"").toUpperCase().includes(q));
   list.sort((a,b)=>a.s.days-b.s.days);
-
   const tb=$("tbody");tb.innerHTML="";$("empty").classList.toggle("hide",list.length>0);
   list.forEach(({v,s})=>{
-    const id=v.no??v.id,ed=canEditV(v);
+    const id=v.no,ed=canEditV(v);
     const dTxt=s.days<0?`逾期 ${Math.abs(s.days)} <small>天</small>`:`${s.days} <small>天</small>`;
     const valid=isDate(v.validDate)?v.validDate:`<span class="tag-exempt">${v.validDate||"—"}</span>`;
     const ext=isDate(v.extinguisherExpiry)?`${v.extinguisherExpiry}${extWarn(v)?' <span class="pill p-urg" style="padding:2px 7px">需更換</span>':''}`:'<span class="sub">—</span>';
-    const step=(on,lab,key)=>`<span class="step ${on?'on':''} ${ed?'click':''}" ${ed?`onclick="toggleStep(${id},'${key}')"`:''}>${lab}</span>`;
+    const step=(on,lab,key)=>`<span class="step ${on?'on':''} ${ed?'click':''}" ${ed?`onclick="toggleStep('${id}','${key}')"`:''}>${lab}</span>`;
     const prog=`<div class="prog">${step(v.notified,'通知','notified')}${step(v.secondNotice,'二次','secondNotice')}${step(v.licenseSent,'行照寄','licenseSent')}${step(v.licenseReturned,'行照收','licenseReturned')}</div>`;
-    const mailBtn=`<button class="icon-btn mail" title="寄送通知" onclick="openMail(${id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></button>`;
-    const editBtns=ed?`<button class="icon-btn" title="編輯" onclick="openModal(${id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
-      <button class="icon-btn del" title="刪除" onclick="delVehicle(${id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>`:'';
+    const mailBtn=`<button class="icon-btn mail" title="寄送通知" onclick="openMail('${id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></button>`;
+    const editBtns=ed?`<button class="icon-btn" title="編輯" onclick="openModal('${id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+      <button class="icon-btn del" title="刪除" onclick="delVehicle('${id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>`:'';
     const tr=document.createElement("tr");
     tr.innerHTML=`<td><div class="plate">${v.plate}</div><div class="sub">${v.type||""}</div></td>
       <td><span class="stn">${v.station||"—"}</span></td>
@@ -405,14 +383,13 @@ function render(){
     tb.appendChild(tr);
   });
 }
-function vget(id){return vehicles.find(v=>(v.no??v.id)===id);}
-function toggleStep(id,key){const v=vget(id);if(!canEditV(v))return;v[key]=!v[key];
-  addLog("通知",`${v.plate}・${({notified:'通知',secondNotice:'二次通知',licenseSent:'行照寄出',licenseReturned:'行照收回'})[key]} ${v[key]?'✓':'取消'}`);render();}
-function renderLog(){const w=$("logwrap");if(!auditLog.length){w.innerHTML='<div class="empty">尚無紀錄</div>';return;}
-  w.innerHTML=auditLog.map(l=>`<div class="log-item"><div class="log-time">${fmt(l.time)}</div><div class="log-user">${l.user}</div><div><span class="act-tag act-${l.action}">${l.action}</span> ${l.detail?`<span class="sub">${l.detail}</span>`:""}</div></div>`).join("");}
+async function toggleStep(id,key){const v=vget(id);if(!canEditV(v))return;const r=await api("toggleStep",{token,no:id,key});if(!r.ok){alert(r.error||"失敗");return;}await loadList();}
 
-/* ---- 寄送通知（所有角色皆可） ---- */
-function openMail(id){const v=vget(id);if(!canSeeV(v))return;mailId=id;const s=statusOf(v);
+async function loadLog(){let r;try{r=await api("listAudit",{token});}catch(e){return;}
+  const w=$("logwrap");if(!r.ok||!r.log||!r.log.length){w.innerHTML='<div class="empty">尚無紀錄</div>';return;}
+  w.innerHTML=r.log.map(l=>`<div class="log-item"><div class="log-time">${fmt(l.time)}</div><div class="log-user">${l.user}</div><div><span class="act-tag act-${l.action}">${l.action}</span> ${l.detail?`<span class="sub">${l.detail}</span>`:""}</div></div>`).join("");}
+
+function openMail(id){const v=vget(id);if(!v)return;mailId=id;const s=statusOf(v);
   const left=s.days<0?`已逾期 ${Math.abs(s.days)} 天`:`剩餘 ${s.days} 天`;
   $("mail-info").innerHTML=`車號 <b>${v.plate}</b>（${v.type||""}）　站所 <b>${v.station||"—"}</b><br>指定檢驗日期 <b>${v.inspDate||"—"}</b>　${left}`;
   $("mail-to").value="";
@@ -420,12 +397,11 @@ function openMail(id){const v=vget(id);if(!canSeeV(v))return;mailId=id;const s=s
   $("mail-body").value=`您好：\n\n貴站車輛 ${v.plate}（${v.type||""}）指定檢驗日期為 ${v.inspDate||""}，${left}，請安排辦理定期驗車。\n提醒：驗車前請確認滅火器尚有 30 天以上效期，以免影響驗車結果。\n\n車隊驗車提醒系統`;
   $("maskM").classList.remove("hide");}
 function closeMail(){$("maskM").classList.add("hide");mailId=null;}
-function sendMail(){const v=vget(mailId);const to=$("mail-to").value.trim();
-  if(!to){alert("請填寫收件者");return;}
+async function sendMail(){const to=$("mail-to").value.trim();if(!to){alert("請填寫收件者");return;}
+  try{await api("notify",{token,no:mailId,to});}catch(e){}
   window.location.href=`mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent($("mail-subj").value)}&body=${encodeURIComponent($("mail-body").value)}`;
-  v.notified=true;addLog("通知",`${v.plate}・寄送通知 → ${to}`);closeMail();render();}
+  closeMail();await loadList();}
 
-/* ---- 車輛新增/編輯 ---- */
 function toggleExempt(){const c=$("m-exempt").checked;$("m-valid").disabled=c;if(c)$("m-valid").value="";}
 function openModal(id=null){editingId=id;
   if(id!=null){const v=vget(id);if(!canEditV(v))return;$("modal-title").textContent="編輯車輛";
@@ -434,32 +410,30 @@ function openModal(id=null){editingId=id;
     const ex=v.validDate==="免定換";$("m-exempt").checked=ex;$("m-valid").disabled=ex;$("m-valid").value=isDate(v.validDate)?v.validDate:"";
     $("m-ext").value=isDate(v.extinguisherExpiry)?v.extinguisherExpiry:"";$("m-note").value=v.note||"";
   }else{$("modal-title").textContent="新增車輛";["m-plate","m-type","m-station","m-insp","m-valid","m-ext","m-note"].forEach(i=>$(i).value="");$("m-exempt").checked=false;$("m-valid").disabled=false;
-    if(session.role==="supervisor"&&session.stations.length===1)$("m-station").value=session.stations[0];}
+    if(me.role==="supervisor"&&me.stations.length===1)$("m-station").value=me.stations[0];}
   $("mask").classList.remove("hide");}
 function closeModal(){$("mask").classList.add("hide");editingId=null;}
-function saveVehicle(){const d={plate:$("m-plate").value.trim(),type:$("m-type").value.trim(),station:$("m-station").value.trim(),
-    inspDate:$("m-insp").value,validDate:$("m-exempt").checked?"免定換":$("m-valid").value,extinguisherExpiry:$("m-ext").value||null,note:$("m-note").value.trim()};
+async function saveVehicle(){const d={no:editingId,plate:$("m-plate").value.trim(),type:$("m-type").value.trim(),station:$("m-station").value.trim(),
+    inspDate:$("m-insp").value,validDate:$("m-exempt").checked?"免定換":$("m-valid").value,extinguisherExpiry:$("m-ext").value||"",note:$("m-note").value.trim()};
   if(!d.plate||!d.inspDate){alert("請至少填寫車號與指定檢驗日期");return;}
-  if(session.role==="supervisor"&&!session.stations.includes(d.station)){alert("主管只能管理轄下站所："+session.stations.join("、"));return;}
-  if(editingId!=null){Object.assign(vget(editingId),d);addLog("修改",d.plate);}
-  else{vehicles.push({no:++nextId,...d,notified:false,secondNotice:false,licenseSent:false,licenseReturned:false});addLog("新增",d.plate);}
-  populateFilters();closeModal();render();}
-function delVehicle(id){const v=vget(id);if(!canEditV(v))return;if(!confirm(`確定刪除 ${v.plate}？`))return;vehicles=vehicles.filter(x=>(x.no??x.id)!==id);addLog("刪除",v.plate);render();}
+  const r=await api("saveVehicle",{token,vehicle:d});if(!r.ok){alert(r.error||"儲存失敗");return;}
+  closeModal();await loadList();}
+async function delVehicle(id){const v=vget(id);if(!canEditV(v))return;if(!confirm(`確定刪除 ${v.plate}？`))return;
+  const r=await api("deleteVehicle",{token,no:id});if(!r.ok){alert(r.error||"刪除失敗");return;}await loadList();}
 
-/* ---- 帳號權限（總部限定） ---- */
-function renderAccounts(){const tb=$("acctBody");
-  tb.innerHTML=accounts.map(a=>{const r=ROLE[a.role];
-    const scope=a.role==="hq"?"全部站所":(a.stations.join("、")||"—");
-    return `<tr>
-      <td class="plate">${a.user}${a.user===session.id?' <span class="sub">（目前登入）</span>':''}</td>
+async function loadAccounts(){let r;try{r=await api("listAccounts",{token});}catch(e){return;}
+  if(!r.ok){$("acctBody").innerHTML=`<tr><td colspan="5" class="empty">${r.error||""}</td></tr>`;return;}
+  accounts=r.accounts||[];
+  $("acctBody").innerHTML=accounts.map(a=>{const role=ROLE[a.role]||ROLE.station;const scope=a.role==="hq"?"全部站所":(a.stations.join("、")||"—");
+    return `<tr><td class="plate">${a.user}${a.user===me.user?' <span class="sub">（目前登入）</span>':''}</td>
       <td>${a.name}</td>
-      <td><span class="role-pill" style="margin:0;background:${r.bg};color:${r.fg}">${r.label}</span></td>
+      <td><span class="role-pill" style="margin:0;background:${role.bg};color:${role.fg}">${role.label}</span></td>
       <td>${scope}</td>
       <td><div class="row-act">
         <button class="icon-btn" title="編輯" onclick="openAcct('${a.user}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
         <button class="icon-btn del" title="刪除" onclick="delAcct('${a.user}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
       </div></td></tr>`;}).join("");}
-function onAcctRole(){const r=$("a-role").value;const wrap=$("a-stations-wrap");
+function onAcctRole(){const r=$("a-role").value,wrap=$("a-stations-wrap");
   if(r==="hq"){wrap.classList.add("hide");return;}wrap.classList.remove("hide");
   if(r==="station"){$("a-stations-label").textContent="所屬站所（單一）";$("a-stations").placeholder="NS2";$("a-stations-hint").textContent="此帳號只看得到這個站所的車輛。";}
   else{$("a-stations-label").textContent="管理站所（多個，用逗號分隔）";$("a-stations").placeholder="NS2,NS18,NS5";$("a-stations-hint").textContent="主管可檢視與編輯這些站所的車輛。";}}
@@ -470,22 +444,17 @@ function openAcct(user=null){editingAcct=user;
   onAcctRole();$("maskA").classList.remove("hide");}
 function closeAcct(){$("maskA").classList.add("hide");editingAcct=null;}
 function parseStations(s){return s.split(/[,;，；\s]+/).map(x=>x.trim()).filter(Boolean);}
-function saveAcct(){const user=$("a-user").value.trim(),name=$("a-name").value.trim(),pw=$("a-pw").value,role=$("a-role").value;
+async function saveAcct(){const user=$("a-user").value.trim(),name=$("a-name").value.trim(),pw=$("a-pw").value,role=$("a-role").value;
   const stations=role==="hq"?[]:parseStations($("a-stations").value);
   if(!user||!name){alert("請填寫帳號與姓名");return;}
   if(role!=="hq"&&!stations.length){alert("請填寫站所範圍");return;}
-  if(editingAcct){const a=accounts.find(x=>x.user===editingAcct);a.name=name;a.role=role;a.stations=stations;if(pw)a.pw=pw;addLog("帳號",`修改 ${user}`);}
-  else{if(accounts.some(x=>x.user===user)){alert("帳號已存在");return;}if(!pw){alert("請設定密碼");return;}
-    accounts.push({user,name,role,stations,pw});addLog("帳號",`新增 ${user}（${ROLE[role].label}）`);}
-  closeAcct();renderAccounts();}
-function delAcct(user){if(user===session.id){alert("無法刪除目前登入的帳號");return;}
-  const tgt=accounts.find(a=>a.user===user);
-  if(tgt.role==="hq"&&accounts.filter(a=>a.role==="hq").length<=1){alert("至少需保留一個總部帳號");return;}
-  if(!confirm(`確定刪除帳號 ${user}？`))return;
-  accounts=accounts.filter(a=>a.user!==user);addLog("帳號",`刪除 ${user}`);renderAccounts();}
+  const r=await api("saveAccount",{token,account:{user,name,role,stations,pw}});if(!r.ok){alert(r.error||"儲存失敗");return;}
+  closeAcct();await loadAccounts();}
+async function delAcct(user){if(!confirm(`確定刪除帳號 ${user}？`))return;
+  const r=await api("deleteAccount",{token,user});if(!r.ok){alert(r.error||"刪除失敗");return;}await loadAccounts();}
 
 $("p").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
-loadData();
+
 </script>
 </body>
 </html>
