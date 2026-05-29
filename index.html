@@ -46,8 +46,8 @@
   aside .spacer{flex:1}
   .who{margin:6px;padding:13px;border-radius:11px;background:rgba(255,255,255,.05);font-size:13px}
   .who .nm{color:#fff;font-weight:600}
+  .who .scope{color:#9fb0b5;font-size:11.5px;margin-top:6px;line-height:1.5}
   .role-pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;margin-top:6px}
-  .role-admin{background:rgba(13,139,122,.25);color:#5fd3c2}.role-viewer{background:rgba(255,255,255,.12);color:#cdd8db}
   .logout{margin-top:10px;width:100%;background:transparent;border:1px solid rgba(255,255,255,.18);color:#cdd8db;padding:9px;border-radius:9px;font-size:13px;transition:.15s}
   .logout:hover{background:rgba(255,255,255,.08);color:#fff}
 
@@ -61,7 +61,7 @@
   .stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;box-shadow:var(--shadow);position:relative;overflow:hidden;cursor:pointer;transition:.15s;text-align:left}
   .stat:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(15,27,36,.12)}
   .stat.sel{outline:2px solid var(--accent);outline-offset:-1px}
-  .stat .lab{font-size:13px;color:var(--muted);font-weight:500;display:flex;align-items:center;gap:5px}
+  .stat .lab{font-size:13px;color:var(--muted);font-weight:500}
   .stat .num{font-family:"Lexend";font-size:30px;font-weight:700;margin-top:6px;line-height:1}
   .stat .bar{position:absolute;left:0;top:0;bottom:0;width:5px}
   .stat .go{position:absolute;right:14px;top:16px;font-size:11px;color:#b6c2c6;opacity:0;transition:.15s}
@@ -120,6 +120,7 @@
   .modal input:focus,.modal select:focus,.modal textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(13,139,122,.15)}
   .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .ck{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;color:#33464d}.ck input{width:auto}
+  .hinttext{font-size:12px;color:var(--muted);margin-top:5px}
   .modal-act{display:flex;gap:10px;margin-top:20px}
   .modal-act button{flex:1;padding:11px;border-radius:10px;font-size:14px;font-weight:600;border:0}
   .cancel{background:#eef2f3;color:#516067}.save{background:linear-gradient(140deg,var(--accent),var(--accent-dk));color:#fff}
@@ -161,17 +162,16 @@
     <button class="nav" id="nav-log" onclick="go('log')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>歷程紀錄</button>
     <button class="nav hide" id="nav-acct" onclick="go('acct')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-8 0v2"/><circle cx="12" cy="7" r="4"/></svg>帳號權限</button>
     <div class="spacer"></div>
-    <div class="who"><div class="nm" id="who-name">—</div><div id="who-role"></div><button class="logout" onclick="doLogout()">登出</button></div>
+    <div class="who"><div class="nm" id="who-name">—</div><div id="who-role"></div><div class="scope" id="who-scope"></div><button class="logout" onclick="doLogout()">登出</button></div>
   </aside>
 
   <main>
-    <!-- 車輛總覽 -->
     <div id="page-fleet">
       <div class="page-head">
         <div><h2>車輛總覽</h2><p id="today-label">—</p></div>
         <div style="display:flex;gap:10px;align-items:center">
           <span class="databadge" id="dbbadge"></span>
-          <button class="add-btn" id="addBtn" onclick="openModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>新增車輛</button>
+          <button class="add-btn hide" id="addBtn" onclick="openModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>新增車輛</button>
         </div>
       </div>
       <div class="cards">
@@ -203,22 +203,20 @@
       <div class="notice" id="notice"></div>
     </div>
 
-    <!-- 歷程紀錄 -->
     <div id="page-log" class="hide">
       <div class="page-head"><div><h2>歷程紀錄</h2><p>系統操作稽核（登入、檢視、新增、修改、刪除、通知、帳號）</p></div></div>
       <div class="table-wrap" id="logwrap"></div>
       <div class="notice">雛形中歷程僅存於本次瀏覽；正式版會寫入後端、無法竄改，並可依使用者／日期查詢。</div>
     </div>
 
-    <!-- 帳號權限 -->
     <div id="page-acct" class="hide">
       <div class="page-head">
-        <div><h2>帳號權限</h2><p>管理可登入的帳號與其權限（管理員可編輯、檢視者唯讀）</p></div>
+        <div><h2>帳號權限</h2><p>站所＝只看自己站　主管＝可編輯轄下站所　總部＝全權限＋管理帳號</p></div>
         <button class="add-btn" onclick="openAcct()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>新增帳號</button>
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>帳號</th><th>姓名</th><th>權限</th><th></th></tr></thead>
+          <thead><tr><th>帳號</th><th>姓名</th><th>權限</th><th>站所範圍</th><th></th></tr></thead>
           <tbody id="acctBody"></tbody>
         </table>
       </div>
@@ -257,7 +255,12 @@
     </div>
     <label>密碼</label><input id="a-pw" type="text" placeholder="編輯時留空＝不變更">
     <label>權限</label>
-    <select id="a-role"><option value="admin">管理員（可編輯）</option><option value="viewer">檢視者（唯讀）</option></select>
+    <select id="a-role" onchange="onAcctRole()"><option value="hq">總部（全權限＋管理帳號）</option><option value="supervisor">主管（可編輯轄下站所）</option><option value="station">站所（只看自己站）</option></select>
+    <div id="a-stations-wrap">
+      <label id="a-stations-label">站所範圍</label>
+      <input id="a-stations" placeholder="NS2,NS18">
+      <div class="hinttext" id="a-stations-hint"></div>
+    </div>
     <div class="modal-act"><button class="cancel" onclick="closeAcct()">取消</button><button class="save" onclick="saveAcct()">儲存</button></div>
   </div>
 </div>
@@ -269,19 +272,21 @@
     <div class="infobox" id="mail-info"></div>
     <label>收件者（可多筆，用分號 ; 分隔）</label>
     <input id="mail-to" placeholder="name@company.com.tw; ns2@company.com.tw">
-    <label>主旨</label>
-    <input id="mail-subj">
-    <label>內容</label>
-    <textarea id="mail-body"></textarea>
+    <label>主旨</label><input id="mail-subj">
+    <label>內容</label><textarea id="mail-body"></textarea>
     <div class="modal-act"><button class="cancel" onclick="closeMail()">取消</button><button class="save" onclick="sendMail()">開啟郵件程式寄出</button></div>
   </div>
 </div>
 
 <script>
-/* 帳號（正式版改為 Supabase）。密碼僅雛形示範用。 */
+const ROLE={
+  hq:{label:"總部",bg:"#e7f6ee",fg:"#0a6f62"},
+  supervisor:{label:"主管",bg:"#e8f0f2",fg:"#34727f"},
+  station:{label:"站所",bg:"#eef2f3",fg:"#516067"}
+};
+/* 帳號（正式版改為 Supabase）。密碼僅雛形示範。stations=可存取站所，總部留空＝全部 */
 let accounts=[
-  {user:"admin", name:"王經理", role:"admin",  pw:"admin123"},
-  {user:"viewer",name:"李助理", role:"viewer", pw:"viewer123"},
+  {user:"admin", name:"系統管理員", role:"hq", stations:[], pw:"admin123"},
 ];
 let session=null,editingId=null,editingAcct=null,mailId=null,filter="all",nextId=10000,dataMode="demo";
 
@@ -311,15 +316,22 @@ function statusOf(v){const d=daysTo(v.inspDate);
 function extWarn(v){if(!isDate(v.extinguisherExpiry))return false;return daysTo(v.extinguisherExpiry)<daysTo(v.inspDate)+30;}
 function addLog(action,detail=""){auditLog.unshift({time:Date.now(),user:session?session.name:"系統",action,detail});}
 
+/* ---- 權限判斷 ---- */
+function canSeeV(v){if(!session)return true;if(session.role==="hq")return true;return session.stations.includes(v.station);}
+function canEdit(){return session&&session.role!=="station";}            // 站所唯讀
+function canEditV(v){if(!session)return false;if(session.role==="hq")return true;if(session.role==="supervisor")return session.stations.includes(v.station);return false;}
+function canAccounts(){return session&&session.role==="hq";}
+function visibleVehicles(){return vehicles.filter(canSeeV);}
+
 async function loadData(){
   try{const res=await fetch("./data.json",{cache:"no-store"});if(!res.ok)throw 0;
     const arr=await res.json();if(Array.isArray(arr)&&arr.length){vehicles=arr;dataMode="live";}
   }catch(e){dataMode="demo";}
-  populateFilters();
 }
 function populateFilters(){
-  const st=[...new Set(vehicles.map(v=>v.station).filter(Boolean))].sort();
-  const ty=[...new Set(vehicles.map(v=>v.type).filter(Boolean))].sort();
+  const vis=visibleVehicles();
+  const st=[...new Set(vis.map(v=>v.station).filter(Boolean))].sort();
+  const ty=[...new Set(vis.map(v=>v.type).filter(Boolean))].sort();
   $("fStation").innerHTML='<option value="">所有站所</option>'+st.map(s=>`<option>${s}</option>`).join("");
   $("fType").innerHTML='<option value="">所有車種</option>'+ty.map(s=>`<option>${s}</option>`).join("");
 }
@@ -327,19 +339,21 @@ function populateFilters(){
 function doLogin(){
   const u=$("u").value.trim(),p=$("p").value,acc=accounts.find(a=>a.user===u&&a.pw===p);
   if(!acc){$("err").textContent="帳號或密碼錯誤";return;}
-  session={id:acc.user,name:acc.name,role:acc.role};$("err").textContent="";addLog("登入");
+  session={id:acc.user,name:acc.name,role:acc.role,stations:acc.stations||[]};$("err").textContent="";addLog("登入");
   $("login").classList.add("hide");$("app").classList.remove("hide");
   $("who-name").textContent=acc.name;
-  $("who-role").innerHTML=acc.role==="admin"?'<span class="role-pill role-admin">管理員</span>':'<span class="role-pill role-viewer">檢視者</span>';
-  $("addBtn").style.display=acc.role==="admin"?"inline-flex":"none";
-  $("nav-acct").classList.toggle("hide",acc.role!=="admin");
+  const r=ROLE[acc.role];
+  $("who-role").innerHTML=`<span class="role-pill" style="background:${r.bg};color:${r.fg}">${r.label}</span>`;
+  $("who-scope").textContent=acc.role==="hq"?"可存取：全部站所":("負責站所："+(acc.stations.join("、")||"—"));
+  $("addBtn").classList.toggle("hide",!canEdit());
+  $("nav-acct").classList.toggle("hide",!canAccounts());
   const p2=n=>String(n).padStart(2,"0");
   $("today-label").textContent=`今日 ${today.getFullYear()}/${p2(today.getMonth()+1)}/${p2(today.getDate())}`;
-  go("fleet");render();
+  populateFilters();go("fleet");render();
 }
 function doLogout(){addLog("登出");session=null;$("u").value="";$("p").value="";$("app").classList.add("hide");$("login").classList.remove("hide");}
 function go(page){
-  if(page==="acct"&&session.role!=="admin")return;
+  if(page==="acct"&&!canAccounts())return;
   ["fleet","log","acct"].forEach(pg=>$("page-"+pg).classList.toggle("hide",pg!==page));
   ["fleet","log","acct"].forEach(pg=>$("nav-"+pg).classList.toggle("active",pg===page));
   if(page==="log"){addLog("檢視","歷程紀錄");renderLog();}
@@ -351,9 +365,10 @@ function setFilter(f){filter=f;
   go("fleet");render();}
 
 function render(){
+  const vis=visibleVehicles();
   let over=0,urg=0,soon=0;
-  vehicles.forEach(v=>{const s=statusOf(v);if(s.key==="over")over++;else if(s.key==="urg")urg++;else if(s.key==="soon")soon++;});
-  $("c-over").textContent=over;$("c-urg").textContent=urg;$("c-soon").textContent=soon;$("c-tot").textContent=vehicles.length;
+  vis.forEach(v=>{const s=statusOf(v);if(s.key==="over")over++;else if(s.key==="urg")urg++;else if(s.key==="soon")soon++;});
+  $("c-over").textContent=over;$("c-urg").textContent=urg;$("c-soon").textContent=soon;$("c-tot").textContent=vis.length;
   $("dbbadge").className="databadge "+(dataMode==="live"?"db-live":"db-demo");
   $("dbbadge").textContent=dataMode==="live"?"● 真實資料 data.json":"● 範例資料 (未載入 data.json)";
   $("notice").innerHTML=dataMode==="live"
@@ -361,7 +376,7 @@ function render(){
     :'目前顯示<b>內建範例</b>（index.html 不含機密，可安心上 GitHub）。把 <b>data.json</b> 放同資料夾並用 GitHub Pages 開啟即會載入真實資料。';
 
   const fS=$("fStation").value,fT=$("fType").value,q=$("fSearch").value.trim().toUpperCase();
-  let list=vehicles.map(v=>({v,s:statusOf(v)}));
+  let list=vis.map(v=>({v,s:statusOf(v)}));
   if(filter!=="all")list=list.filter(x=>x.s.key===filter);
   if(fS)list=list.filter(x=>x.v.station===fS);
   if(fT)list=list.filter(x=>x.v.type===fT);
@@ -369,36 +384,35 @@ function render(){
   list.sort((a,b)=>a.s.days-b.s.days);
 
   const tb=$("tbody");tb.innerHTML="";$("empty").classList.toggle("hide",list.length>0);
-  const admin=session.role==="admin";
   list.forEach(({v,s})=>{
-    const id=v.no??v.id;
+    const id=v.no??v.id,ed=canEditV(v);
     const dTxt=s.days<0?`逾期 ${Math.abs(s.days)} <small>天</small>`:`${s.days} <small>天</small>`;
     const valid=isDate(v.validDate)?v.validDate:`<span class="tag-exempt">${v.validDate||"—"}</span>`;
     const ext=isDate(v.extinguisherExpiry)?`${v.extinguisherExpiry}${extWarn(v)?' <span class="pill p-urg" style="padding:2px 7px">需更換</span>':''}`:'<span class="sub">—</span>';
-    const step=(on,lab,key)=>`<span class="step ${on?'on':''} ${admin?'click':''}" ${admin?`onclick="toggleStep(${id},'${key}')"`:''}>${lab}</span>`;
+    const step=(on,lab,key)=>`<span class="step ${on?'on':''} ${ed?'click':''}" ${ed?`onclick="toggleStep(${id},'${key}')"`:''}>${lab}</span>`;
     const prog=`<div class="prog">${step(v.notified,'通知','notified')}${step(v.secondNotice,'二次','secondNotice')}${step(v.licenseSent,'行照寄','licenseSent')}${step(v.licenseReturned,'行照收','licenseReturned')}</div>`;
-    const acts=admin?`<div class="row-act">
-      <button class="icon-btn mail" title="寄送通知" onclick="openMail(${id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></button>
-      <button class="icon-btn" title="編輯" onclick="openModal(${id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
-      <button class="icon-btn del" title="刪除" onclick="delVehicle(${id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button></div>`:'';
+    const mailBtn=`<button class="icon-btn mail" title="寄送通知" onclick="openMail(${id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></button>`;
+    const editBtns=ed?`<button class="icon-btn" title="編輯" onclick="openModal(${id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+      <button class="icon-btn del" title="刪除" onclick="delVehicle(${id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>`:'';
     const tr=document.createElement("tr");
     tr.innerHTML=`<td><div class="plate">${v.plate}</div><div class="sub">${v.type||""}</div></td>
       <td><span class="stn">${v.station||"—"}</span></td>
       <td>${v.inspDate||"—"}</td><td><span class="days">${dTxt}</span></td>
       <td>${valid}</td><td>${ext}</td>
       <td><span class="pill p-${s.key}">${s.label}</span></td>
-      <td>${prog}</td><td>${acts}</td>`;
+      <td>${prog}</td>
+      <td><div class="row-act">${mailBtn}${editBtns}</div></td>`;
     tb.appendChild(tr);
   });
 }
 function vget(id){return vehicles.find(v=>(v.no??v.id)===id);}
-function toggleStep(id,key){if(session.role!=="admin")return;const v=vget(id);v[key]=!v[key];
+function toggleStep(id,key){const v=vget(id);if(!canEditV(v))return;v[key]=!v[key];
   addLog("通知",`${v.plate}・${({notified:'通知',secondNotice:'二次通知',licenseSent:'行照寄出',licenseReturned:'行照收回'})[key]} ${v[key]?'✓':'取消'}`);render();}
 function renderLog(){const w=$("logwrap");if(!auditLog.length){w.innerHTML='<div class="empty">尚無紀錄</div>';return;}
   w.innerHTML=auditLog.map(l=>`<div class="log-item"><div class="log-time">${fmt(l.time)}</div><div class="log-user">${l.user}</div><div><span class="act-tag act-${l.action}">${l.action}</span> ${l.detail?`<span class="sub">${l.detail}</span>`:""}</div></div>`).join("");}
 
-/* ---- 寄送通知 ---- */
-function openMail(id){const v=vget(id);mailId=id;const s=statusOf(v);
+/* ---- 寄送通知（所有角色皆可） ---- */
+function openMail(id){const v=vget(id);if(!canSeeV(v))return;mailId=id;const s=statusOf(v);
   const left=s.days<0?`已逾期 ${Math.abs(s.days)} 天`:`剩餘 ${s.days} 天`;
   $("mail-info").innerHTML=`車號 <b>${v.plate}</b>（${v.type||""}）　站所 <b>${v.station||"—"}</b><br>指定檢驗日期 <b>${v.inspDate||"—"}</b>　${left}`;
   $("mail-to").value="";
@@ -408,55 +422,65 @@ function openMail(id){const v=vget(id);mailId=id;const s=statusOf(v);
 function closeMail(){$("maskM").classList.add("hide");mailId=null;}
 function sendMail(){const v=vget(mailId);const to=$("mail-to").value.trim();
   if(!to){alert("請填寫收件者");return;}
-  const url=`mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent($("mail-subj").value)}&body=${encodeURIComponent($("mail-body").value)}`;
-  window.location.href=url;            // 開啟使用者的郵件程式，由本人確認後寄出
-  v.notified=true;
-  addLog("通知",`${v.plate}・寄送通知 → ${to}`);
-  closeMail();render();}
+  window.location.href=`mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent($("mail-subj").value)}&body=${encodeURIComponent($("mail-body").value)}`;
+  v.notified=true;addLog("通知",`${v.plate}・寄送通知 → ${to}`);closeMail();render();}
 
 /* ---- 車輛新增/編輯 ---- */
 function toggleExempt(){const c=$("m-exempt").checked;$("m-valid").disabled=c;if(c)$("m-valid").value="";}
 function openModal(id=null){editingId=id;
-  if(id!=null){const v=vget(id);$("modal-title").textContent="編輯車輛";
+  if(id!=null){const v=vget(id);if(!canEditV(v))return;$("modal-title").textContent="編輯車輛";
     $("m-plate").value=v.plate;$("m-type").value=v.type||"";$("m-station").value=v.station||"";
     $("m-insp").value=isDate(v.inspDate)?v.inspDate:"";
     const ex=v.validDate==="免定換";$("m-exempt").checked=ex;$("m-valid").disabled=ex;$("m-valid").value=isDate(v.validDate)?v.validDate:"";
     $("m-ext").value=isDate(v.extinguisherExpiry)?v.extinguisherExpiry:"";$("m-note").value=v.note||"";
-  }else{$("modal-title").textContent="新增車輛";["m-plate","m-type","m-station","m-insp","m-valid","m-ext","m-note"].forEach(i=>$(i).value="");$("m-exempt").checked=false;$("m-valid").disabled=false;}
+  }else{$("modal-title").textContent="新增車輛";["m-plate","m-type","m-station","m-insp","m-valid","m-ext","m-note"].forEach(i=>$(i).value="");$("m-exempt").checked=false;$("m-valid").disabled=false;
+    if(session.role==="supervisor"&&session.stations.length===1)$("m-station").value=session.stations[0];}
   $("mask").classList.remove("hide");}
 function closeModal(){$("mask").classList.add("hide");editingId=null;}
 function saveVehicle(){const d={plate:$("m-plate").value.trim(),type:$("m-type").value.trim(),station:$("m-station").value.trim(),
     inspDate:$("m-insp").value,validDate:$("m-exempt").checked?"免定換":$("m-valid").value,extinguisherExpiry:$("m-ext").value||null,note:$("m-note").value.trim()};
   if(!d.plate||!d.inspDate){alert("請至少填寫車號與指定檢驗日期");return;}
+  if(session.role==="supervisor"&&!session.stations.includes(d.station)){alert("主管只能管理轄下站所："+session.stations.join("、"));return;}
   if(editingId!=null){Object.assign(vget(editingId),d);addLog("修改",d.plate);}
-  else{vehicles.push({no:++nextId,...d,notified:false,secondNotice:false,licenseSent:false,licenseReturned:false});addLog("新增",d.plate);populateFilters();}
-  closeModal();render();}
-function delVehicle(id){const v=vget(id);if(!confirm(`確定刪除 ${v.plate}？`))return;vehicles=vehicles.filter(x=>(x.no??x.id)!==id);addLog("刪除",v.plate);render();}
+  else{vehicles.push({no:++nextId,...d,notified:false,secondNotice:false,licenseSent:false,licenseReturned:false});addLog("新增",d.plate);}
+  populateFilters();closeModal();render();}
+function delVehicle(id){const v=vget(id);if(!canEditV(v))return;if(!confirm(`確定刪除 ${v.plate}？`))return;vehicles=vehicles.filter(x=>(x.no??x.id)!==id);addLog("刪除",v.plate);render();}
 
-/* ---- 帳號權限 ---- */
+/* ---- 帳號權限（總部限定） ---- */
 function renderAccounts(){const tb=$("acctBody");
-  tb.innerHTML=accounts.map(a=>`<tr>
-    <td class="plate">${a.user}${a.user===session.id?' <span class="sub">（目前登入）</span>':''}</td>
-    <td>${a.name}</td>
-    <td><span class="role-pill ${a.role==='admin'?'role-admin':'role-viewer'}" style="color:${a.role==='admin'?'#0a6f62':'#516067'};background:${a.role==='admin'?'#e7f6ee':'#eef2f3'}">${a.role==='admin'?'管理員':'檢視者'}</span></td>
-    <td><div class="row-act">
-      <button class="icon-btn" title="編輯" onclick="openAcct('${a.user}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
-      <button class="icon-btn del" title="刪除" onclick="delAcct('${a.user}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
-    </div></td></tr>`).join("");}
+  tb.innerHTML=accounts.map(a=>{const r=ROLE[a.role];
+    const scope=a.role==="hq"?"全部站所":(a.stations.join("、")||"—");
+    return `<tr>
+      <td class="plate">${a.user}${a.user===session.id?' <span class="sub">（目前登入）</span>':''}</td>
+      <td>${a.name}</td>
+      <td><span class="role-pill" style="margin:0;background:${r.bg};color:${r.fg}">${r.label}</span></td>
+      <td>${scope}</td>
+      <td><div class="row-act">
+        <button class="icon-btn" title="編輯" onclick="openAcct('${a.user}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+        <button class="icon-btn del" title="刪除" onclick="delAcct('${a.user}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+      </div></td></tr>`;}).join("");}
+function onAcctRole(){const r=$("a-role").value;const wrap=$("a-stations-wrap");
+  if(r==="hq"){wrap.classList.add("hide");return;}wrap.classList.remove("hide");
+  if(r==="station"){$("a-stations-label").textContent="所屬站所（單一）";$("a-stations").placeholder="NS2";$("a-stations-hint").textContent="此帳號只看得到這個站所的車輛。";}
+  else{$("a-stations-label").textContent="管理站所（多個，用逗號分隔）";$("a-stations").placeholder="NS2,NS18,NS5";$("a-stations-hint").textContent="主管可檢視與編輯這些站所的車輛。";}}
 function openAcct(user=null){editingAcct=user;
   if(user){const a=accounts.find(x=>x.user===user);$("acct-title").textContent="編輯帳號";
-    $("a-user").value=a.user;$("a-user").disabled=true;$("a-name").value=a.name;$("a-pw").value="";$("a-role").value=a.role;
-  }else{$("acct-title").textContent="新增帳號";$("a-user").disabled=false;["a-user","a-name","a-pw"].forEach(i=>$(i).value="");$("a-role").value="viewer";}
-  $("maskA").classList.remove("hide");}
+    $("a-user").value=a.user;$("a-user").disabled=true;$("a-name").value=a.name;$("a-pw").value="";$("a-role").value=a.role;$("a-stations").value=(a.stations||[]).join(",");
+  }else{$("acct-title").textContent="新增帳號";$("a-user").disabled=false;["a-user","a-name","a-pw","a-stations"].forEach(i=>$(i).value="");$("a-role").value="station";}
+  onAcctRole();$("maskA").classList.remove("hide");}
 function closeAcct(){$("maskA").classList.add("hide");editingAcct=null;}
+function parseStations(s){return s.split(/[,;，；\s]+/).map(x=>x.trim()).filter(Boolean);}
 function saveAcct(){const user=$("a-user").value.trim(),name=$("a-name").value.trim(),pw=$("a-pw").value,role=$("a-role").value;
+  const stations=role==="hq"?[]:parseStations($("a-stations").value);
   if(!user||!name){alert("請填寫帳號與姓名");return;}
-  if(editingAcct){const a=accounts.find(x=>x.user===editingAcct);a.name=name;a.role=role;if(pw)a.pw=pw;addLog("帳號",`修改 ${user}`);}
+  if(role!=="hq"&&!stations.length){alert("請填寫站所範圍");return;}
+  if(editingAcct){const a=accounts.find(x=>x.user===editingAcct);a.name=name;a.role=role;a.stations=stations;if(pw)a.pw=pw;addLog("帳號",`修改 ${user}`);}
   else{if(accounts.some(x=>x.user===user)){alert("帳號已存在");return;}if(!pw){alert("請設定密碼");return;}
-    accounts.push({user,name,role,pw});addLog("帳號",`新增 ${user}（${role==='admin'?'管理員':'檢視者'}）`);}
+    accounts.push({user,name,role,stations,pw});addLog("帳號",`新增 ${user}（${ROLE[role].label}）`);}
   closeAcct();renderAccounts();}
 function delAcct(user){if(user===session.id){alert("無法刪除目前登入的帳號");return;}
-  if(accounts.filter(a=>a.role==="admin").length<=1&&accounts.find(a=>a.user===user).role==="admin"){alert("至少需保留一個管理員");return;}
+  const tgt=accounts.find(a=>a.user===user);
+  if(tgt.role==="hq"&&accounts.filter(a=>a.role==="hq").length<=1){alert("至少需保留一個總部帳號");return;}
   if(!confirm(`確定刪除帳號 ${user}？`))return;
   accounts=accounts.filter(a=>a.user!==user);addLog("帳號",`刪除 ${user}`);renderAccounts();}
 
