@@ -23,7 +23,7 @@
     background:radial-gradient(1200px 600px at 80% -10%,rgba(13,139,122,.25),transparent 60%),
     radial-gradient(900px 500px at -10% 110%,rgba(13,139,122,.18),transparent 55%),
     linear-gradient(160deg,#0f1b24,#13252e 60%,#0d8b7a 230%)}
-  .login-card{width:100%;max-width:400px;background:var(--card);border-radius:20px;padding:38px 34px 30px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+  .login-card{width:100%;max-width:400px;background:var(--card);border-radius:20px;padding:38px 34px 32px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
   .brand{display:flex;align-items:center;gap:11px;margin-bottom:24px}
   .brand .logo{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;background:linear-gradient(140deg,var(--accent),var(--accent-dk));color:#fff}
   .brand .logo svg{width:23px;height:23px}
@@ -34,9 +34,7 @@
   .btn{width:100%;margin-top:22px;padding:13px;border:0;border-radius:11px;color:#fff;font-size:15px;font-weight:600;background:linear-gradient(140deg,var(--accent),var(--accent-dk));transition:.15s}
   .btn:hover{filter:brightness(1.06)}
   .login-err{color:var(--over);font-size:13px;margin-top:12px;min-height:18px;text-align:center}
-  .hint{margin-top:20px;padding:13px;background:#f1f5f6;border-radius:10px;font-size:12px;color:#5a6b71;line-height:1.7}
-  .hint b{color:#33464d}
-  .demo-tag{display:inline-block;font-size:11px;background:var(--soon-bg);color:var(--soon);padding:2px 8px;border-radius:20px;font-weight:700;margin-bottom:14px}
+  .demo-tag{display:inline-block;font-size:11px;background:var(--soon-bg);color:var(--soon);padding:2px 8px;border-radius:20px;font-weight:700;margin-bottom:6px}
 
   #app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
   aside{background:var(--ink);color:#c5d2d6;padding:22px 16px;display:flex;flex-direction:column;gap:6px}
@@ -60,9 +58,14 @@
   .add-btn svg{width:17px;height:17px}
 
   .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
-  .stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;box-shadow:var(--shadow);position:relative;overflow:hidden}
-  .stat .lab{font-size:13px;color:var(--muted);font-weight:500}.stat .num{font-family:"Lexend";font-size:30px;font-weight:700;margin-top:6px;line-height:1}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;box-shadow:var(--shadow);position:relative;overflow:hidden;cursor:pointer;transition:.15s;text-align:left}
+  .stat:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(15,27,36,.12)}
+  .stat.sel{outline:2px solid var(--accent);outline-offset:-1px}
+  .stat .lab{font-size:13px;color:var(--muted);font-weight:500;display:flex;align-items:center;gap:5px}
+  .stat .num{font-family:"Lexend";font-size:30px;font-weight:700;margin-top:6px;line-height:1}
   .stat .bar{position:absolute;left:0;top:0;bottom:0;width:5px}
+  .stat .go{position:absolute;right:14px;top:16px;font-size:11px;color:#b6c2c6;opacity:0;transition:.15s}
+  .stat:hover .go{opacity:1}
   .stat.over .num{color:var(--urg)}.stat.over .bar{background:var(--urg)}
   .stat.urg .num{color:var(--over)}.stat.urg .bar{background:var(--over)}
   .stat.soon .num{color:var(--soon)}.stat.soon .bar{background:var(--soon)}
@@ -72,11 +75,10 @@
   .chip{background:#fff;border:1px solid var(--line);padding:7px 14px;border-radius:20px;font-size:13px;color:#516067;font-weight:500;transition:.15s}
   .chip.active{background:var(--ink);color:#fff;border-color:var(--ink)}
   .tsel,.tsearch{padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-size:13px;font-family:inherit;background:#fff;color:#33464d}
-  .tsearch{min-width:150px}
-  .grow{flex:1}
+  .tsearch{min-width:150px}.grow{flex:1}
 
   .table-wrap{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:auto}
-  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:880px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:900px}
   thead th{text-align:left;padding:12px 14px;font-size:12.5px;color:var(--muted);font-weight:600;background:#fafbfb;border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0}
   tbody td{padding:11px 14px;border-bottom:1px solid #eef2f3;vertical-align:middle;white-space:nowrap}
   tbody tr:last-child td{border-bottom:0}tbody tr:hover{background:#fafdfc}
@@ -98,6 +100,7 @@
   .row-act{display:flex;gap:6px}
   .icon-btn{border:1px solid var(--line);background:#fff;border-radius:8px;width:30px;height:30px;display:grid;place-items:center;color:#5a6b71;transition:.15s}
   .icon-btn:hover{border-color:var(--accent);color:var(--accent)}.icon-btn.del:hover{border-color:var(--over);color:var(--over)}
+  .icon-btn.mail:hover{border-color:var(--soon);color:var(--soon)}
   .icon-btn svg{width:15px;height:15px}
   .empty{padding:50px;text-align:center;color:var(--muted);font-size:14px}
 
@@ -106,19 +109,22 @@
   .act-tag{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:6px;background:#eef2f3;color:#516067}
   .act-登入,.act-登出,.act-檢視{background:#e8f0f2;color:#34727f}
   .act-新增{background:var(--ok-bg);color:var(--ok)}.act-修改{background:var(--soon-bg);color:var(--soon)}
-  .act-刪除{background:var(--over-bg);color:var(--over)}.act-通知{background:var(--soon-bg);color:var(--soon)}
+  .act-刪除{background:var(--over-bg);color:var(--over)}.act-通知{background:var(--soon-bg);color:var(--soon)}.act-帳號{background:#ece8fb;color:#6a4fb0}
 
   .mask{position:fixed;inset:0;background:rgba(15,27,36,.5);backdrop-filter:blur(2px);display:grid;place-items:center;padding:20px;z-index:50}
-  .modal{background:#fff;border-radius:16px;width:100%;max-width:460px;padding:24px;box-shadow:0 30px 80px rgba(0,0,0,.3);max-height:90vh;overflow:auto}
+  .modal{background:#fff;border-radius:16px;width:100%;max-width:480px;padding:24px;box-shadow:0 30px 80px rgba(0,0,0,.3);max-height:90vh;overflow:auto}
   .modal h3{font-family:"Lexend";margin:0 0 16px;font-size:18px}
   .modal label{display:block;font-size:13px;font-weight:500;margin:12px 0 6px;color:#33464d}
-  .modal input,.modal select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;font-size:14px;font-family:inherit;background:#fbfcfc}
-  .modal input:focus,.modal select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(13,139,122,.15)}
+  .modal input,.modal select,.modal textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;font-size:14px;font-family:inherit;background:#fbfcfc}
+  .modal textarea{min-height:120px;resize:vertical;line-height:1.6}
+  .modal input:focus,.modal select:focus,.modal textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(13,139,122,.15)}
   .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .ck{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;color:#33464d}.ck input{width:auto}
   .modal-act{display:flex;gap:10px;margin-top:20px}
   .modal-act button{flex:1;padding:11px;border-radius:10px;font-size:14px;font-weight:600;border:0}
   .cancel{background:#eef2f3;color:#516067}.save{background:linear-gradient(140deg,var(--accent),var(--accent-dk));color:#fff}
+  .infobox{background:#f4f7f8;border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:13px;line-height:1.8;color:#445660}
+  .infobox b{color:#1d2b32}
 
   .databadge{font-size:12px;padding:4px 10px;border-radius:20px;font-weight:600}
   .db-live{background:var(--ok-bg);color:var(--ok)}.db-demo{background:var(--soon-bg);color:var(--soon)}
@@ -140,13 +146,11 @@
       <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M6 17l1.5-5h9L18 17M7 12l1-4h8l1 4"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg></div>
       <div><h1>車隊驗車提醒系統</h1><p>Fleet Inspection Reminder</p></div>
     </div>
-    <span class="demo-tag">雛形 DEMO · 範例帳號</span>
+    <span class="demo-tag">雛形 DEMO</span>
     <label class="f">帳號</label><input id="u" type="text" placeholder="請輸入帳號" autocomplete="off" />
     <label class="f">密碼</label><input id="p" type="password" placeholder="請輸入密碼" />
     <button class="btn" onclick="doLogin()">登入</button>
     <div class="login-err" id="err"></div>
-    <div class="hint"><b>測試帳號（正式版改為真正帳號驗證）</b><br>
-      管理員 — <b>admin</b> / <b>admin123</b>（可編輯）　檢視者 — <b>viewer</b> / <b>viewer123</b>（唯讀）</div>
   </div>
 </section>
 
@@ -155,11 +159,13 @@
     <div class="brand2"><div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M6 17l1.5-5h9L18 17M7 12l1-4h8l1 4"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg></div><span>驗車提醒</span></div>
     <button class="nav active" id="nav-fleet" onclick="go('fleet')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 9h18M8 14h4"/></svg>車輛總覽</button>
     <button class="nav" id="nav-log" onclick="go('log')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>歷程紀錄</button>
+    <button class="nav hide" id="nav-acct" onclick="go('acct')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-8 0v2"/><circle cx="12" cy="7" r="4"/></svg>帳號權限</button>
     <div class="spacer"></div>
     <div class="who"><div class="nm" id="who-name">—</div><div id="who-role"></div><button class="logout" onclick="doLogout()">登出</button></div>
   </aside>
 
   <main>
+    <!-- 車輛總覽 -->
     <div id="page-fleet">
       <div class="page-head">
         <div><h2>車輛總覽</h2><p id="today-label">—</p></div>
@@ -169,10 +175,10 @@
         </div>
       </div>
       <div class="cards">
-        <div class="stat over"><div class="bar"></div><div class="lab">已逾期</div><div class="num" id="c-over">0</div></div>
-        <div class="stat urg"><div class="bar"></div><div class="lab">5 天內到期</div><div class="num" id="c-urg">0</div></div>
-        <div class="stat soon"><div class="bar"></div><div class="lab">30 天內到期</div><div class="num" id="c-soon">0</div></div>
-        <div class="stat tot"><div class="bar"></div><div class="lab">車輛總數</div><div class="num" id="c-tot">0</div></div>
+        <button class="stat over" data-f="over" onclick="setFilter('over')"><div class="bar"></div><div class="lab">已逾期</div><div class="num" id="c-over">0</div><span class="go">點擊查看 ›</span></button>
+        <button class="stat urg" data-f="urg" onclick="setFilter('urg')"><div class="bar"></div><div class="lab">5 天內到期</div><div class="num" id="c-urg">0</div><span class="go">點擊查看 ›</span></button>
+        <button class="stat soon" data-f="soon" onclick="setFilter('soon')"><div class="bar"></div><div class="lab">30 天內到期</div><div class="num" id="c-soon">0</div><span class="go">點擊查看 ›</span></button>
+        <button class="stat tot" data-f="all" onclick="setFilter('all')"><div class="bar"></div><div class="lab">車輛總數</div><div class="num" id="c-tot">0</div><span class="go">全部 ›</span></button>
       </div>
       <div class="toolbar">
         <button class="chip active" data-f="all" onclick="setFilter('all')">全部</button>
@@ -197,14 +203,31 @@
       <div class="notice" id="notice"></div>
     </div>
 
+    <!-- 歷程紀錄 -->
     <div id="page-log" class="hide">
-      <div class="page-head"><div><h2>歷程紀錄</h2><p>系統操作稽核（登入、檢視、新增、修改、刪除、通知）</p></div></div>
+      <div class="page-head"><div><h2>歷程紀錄</h2><p>系統操作稽核（登入、檢視、新增、修改、刪除、通知、帳號）</p></div></div>
       <div class="table-wrap" id="logwrap"></div>
       <div class="notice">雛形中歷程僅存於本次瀏覽；正式版會寫入後端、無法竄改，並可依使用者／日期查詢。</div>
+    </div>
+
+    <!-- 帳號權限 -->
+    <div id="page-acct" class="hide">
+      <div class="page-head">
+        <div><h2>帳號權限</h2><p>管理可登入的帳號與其權限（管理員可編輯、檢視者唯讀）</p></div>
+        <button class="add-btn" onclick="openAcct()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>新增帳號</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>帳號</th><th>姓名</th><th>權限</th><th></th></tr></thead>
+          <tbody id="acctBody"></tbody>
+        </table>
+      </div>
+      <div class="notice">雛形中帳號與密碼僅存於本次瀏覽；正式版改由 Supabase 處理真正的帳號驗證與加密儲存。</div>
     </div>
   </main>
 </section>
 
+<!-- 車輛 modal -->
 <div class="mask hide" id="mask">
   <div class="modal">
     <h3 id="modal-title">新增車輛</h3>
@@ -224,14 +247,47 @@
   </div>
 </div>
 
+<!-- 帳號 modal -->
+<div class="mask hide" id="maskA">
+  <div class="modal">
+    <h3 id="acct-title">新增帳號</h3>
+    <div class="two">
+      <div><label>帳號</label><input id="a-user" placeholder="如 NS2 或 email"></div>
+      <div><label>姓名</label><input id="a-name" placeholder="王小明"></div>
+    </div>
+    <label>密碼</label><input id="a-pw" type="text" placeholder="編輯時留空＝不變更">
+    <label>權限</label>
+    <select id="a-role"><option value="admin">管理員（可編輯）</option><option value="viewer">檢視者（唯讀）</option></select>
+    <div class="modal-act"><button class="cancel" onclick="closeAcct()">取消</button><button class="save" onclick="saveAcct()">儲存</button></div>
+  </div>
+</div>
+
+<!-- 寄送通知 modal -->
+<div class="mask hide" id="maskM">
+  <div class="modal">
+    <h3>寄送驗車通知</h3>
+    <div class="infobox" id="mail-info"></div>
+    <label>收件者（可多筆，用分號 ; 分隔）</label>
+    <input id="mail-to" placeholder="name@company.com.tw; ns2@company.com.tw">
+    <label>主旨</label>
+    <input id="mail-subj">
+    <label>內容</label>
+    <textarea id="mail-body"></textarea>
+    <div class="modal-act"><button class="cancel" onclick="closeMail()">取消</button><button class="save" onclick="sendMail()">開啟郵件程式寄出</button></div>
+  </div>
+</div>
+
 <script>
-const USERS={admin:{pw:"admin123",name:"王經理",role:"admin"},viewer:{pw:"viewer123",name:"李助理",role:"viewer"}};
-let session=null,editingId=null,filter="all",nextId=10000,dataMode="demo";
+/* 帳號（正式版改為 Supabase）。密碼僅雛形示範用。 */
+let accounts=[
+  {user:"admin", name:"王經理", role:"admin",  pw:"admin123"},
+  {user:"viewer",name:"李助理", role:"viewer", pw:"viewer123"},
+];
+let session=null,editingId=null,editingAcct=null,mailId=null,filter="all",nextId=10000,dataMode="demo";
 
 const today=new Date();today.setHours(0,0,0,0);
 const off=d=>{const x=new Date(today);x.setDate(x.getDate()+d);return x.toISOString().slice(0,10);};
 
-/* 內建假資料：index.html 不含任何機密。讀到 data.json 時會被取代。 */
 let vehicles=[
   {no:1,plate:"DEMO-001",station:"NS2",inspDate:off(-3),validDate:off(-3),type:"5T",extinguisherExpiry:off(10),notified:true,secondNotice:true,licenseSent:false,licenseReturned:false,note:""},
   {no:2,plate:"DEMO-002",station:"DC3",inspDate:off(4),validDate:off(730),type:"1.9T",extinguisherExpiry:off(60),notified:true,secondNotice:false,licenseSent:false,licenseReturned:false,note:""},
@@ -245,28 +301,19 @@ let auditLog=[];
 const $=id=>document.getElementById(id);
 const fmt=ts=>{const d=new Date(ts),p=n=>String(n).padStart(2,"0");return `${d.getFullYear()}/${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;};
 const daysTo=ymd=>Math.round((new Date(ymd)-today)/86400000);
-const isDate=v=>typeof v==="string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
+const isDate=v=>typeof v==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(v);
 
-function statusOf(v){
-  const d=daysTo(v.inspDate);
+function statusOf(v){const d=daysTo(v.inspDate);
   if(d<0)return{key:"over",label:"已逾期",days:d};
   if(d<=5)return{key:"urg",label:"5天內",days:d};
   if(d<=30)return{key:"soon",label:"30天內",days:d};
-  return{key:"ok",label:"正常",days:d};
-}
-function extWarn(v){ // 滅火器是否需更換（驗車前需有30天以上效期）
-  if(!isDate(v.extinguisherExpiry))return false;
-  return daysTo(v.extinguisherExpiry) < daysTo(v.inspDate)+30;
-}
+  return{key:"ok",label:"正常",days:d};}
+function extWarn(v){if(!isDate(v.extinguisherExpiry))return false;return daysTo(v.extinguisherExpiry)<daysTo(v.inspDate)+30;}
 function addLog(action,detail=""){auditLog.unshift({time:Date.now(),user:session?session.name:"系統",action,detail});}
 
-/* 載入 data.json（有就用真實資料，沒有就維持假資料） */
 async function loadData(){
-  try{
-    const res=await fetch("./data.json",{cache:"no-store"});
-    if(!res.ok)throw 0;
-    const arr=await res.json();
-    if(Array.isArray(arr)&&arr.length){vehicles=arr;dataMode="live";}
+  try{const res=await fetch("./data.json",{cache:"no-store"});if(!res.ok)throw 0;
+    const arr=await res.json();if(Array.isArray(arr)&&arr.length){vehicles=arr;dataMode="live";}
   }catch(e){dataMode="demo";}
   populateFilters();
 }
@@ -278,24 +325,30 @@ function populateFilters(){
 }
 
 function doLogin(){
-  const u=$("u").value.trim(),p=$("p").value,acc=USERS[u];
-  if(!acc||acc.pw!==p){$("err").textContent="帳號或密碼錯誤";return;}
-  session={id:u,name:acc.name,role:acc.role};$("err").textContent="";addLog("登入");
+  const u=$("u").value.trim(),p=$("p").value,acc=accounts.find(a=>a.user===u&&a.pw===p);
+  if(!acc){$("err").textContent="帳號或密碼錯誤";return;}
+  session={id:acc.user,name:acc.name,role:acc.role};$("err").textContent="";addLog("登入");
   $("login").classList.add("hide");$("app").classList.remove("hide");
   $("who-name").textContent=acc.name;
   $("who-role").innerHTML=acc.role==="admin"?'<span class="role-pill role-admin">管理員</span>':'<span class="role-pill role-viewer">檢視者</span>';
   $("addBtn").style.display=acc.role==="admin"?"inline-flex":"none";
+  $("nav-acct").classList.toggle("hide",acc.role!=="admin");
   const p2=n=>String(n).padStart(2,"0");
   $("today-label").textContent=`今日 ${today.getFullYear()}/${p2(today.getMonth()+1)}/${p2(today.getDate())}`;
   go("fleet");render();
 }
 function doLogout(){addLog("登出");session=null;$("u").value="";$("p").value="";$("app").classList.add("hide");$("login").classList.remove("hide");}
 function go(page){
-  $("page-fleet").classList.toggle("hide",page!=="fleet");$("page-log").classList.toggle("hide",page!=="log");
-  $("nav-fleet").classList.toggle("active",page==="fleet");$("nav-log").classList.toggle("active",page==="log");
+  if(page==="acct"&&session.role!=="admin")return;
+  ["fleet","log","acct"].forEach(pg=>$("page-"+pg).classList.toggle("hide",pg!==page));
+  ["fleet","log","acct"].forEach(pg=>$("nav-"+pg).classList.toggle("active",pg===page));
   if(page==="log"){addLog("檢視","歷程紀錄");renderLog();}
+  if(page==="acct"){renderAccounts();}
 }
-function setFilter(f){filter=f;document.querySelectorAll(".chip").forEach(c=>c.classList.toggle("active",c.dataset.f===f));render();}
+function setFilter(f){filter=f;
+  document.querySelectorAll(".chip").forEach(c=>c.classList.toggle("active",c.dataset.f===f));
+  document.querySelectorAll(".stat").forEach(c=>c.classList.toggle("sel",c.dataset.f===f));
+  go("fleet");render();}
 
 function render(){
   let over=0,urg=0,soon=0;
@@ -304,8 +357,8 @@ function render(){
   $("dbbadge").className="databadge "+(dataMode==="live"?"db-live":"db-demo");
   $("dbbadge").textContent=dataMode==="live"?"● 真實資料 data.json":"● 範例資料 (未載入 data.json)";
   $("notice").innerHTML=dataMode==="live"
-    ? '資料來源：同資料夾的 <b>data.json</b>。此檔含機密，請勿放入公開 repo。'
-    : '目前顯示<b>內建範例</b>（index.html 不含機密，可安心上 GitHub）。把 <b>data.json</b> 放在同資料夾並用 GitHub Pages 開啟即會載入真實 186 台。';
+    ?'資料來源：同資料夾的 <b>data.json</b>。此檔含機密，請勿放入公開 repo。'
+    :'目前顯示<b>內建範例</b>（index.html 不含機密，可安心上 GitHub）。把 <b>data.json</b> 放同資料夾並用 GitHub Pages 開啟即會載入真實資料。';
 
   const fS=$("fStation").value,fT=$("fType").value,q=$("fSearch").value.trim().toUpperCase();
   let list=vehicles.map(v=>({v,s:statusOf(v)}));
@@ -318,61 +371,95 @@ function render(){
   const tb=$("tbody");tb.innerHTML="";$("empty").classList.toggle("hide",list.length>0);
   const admin=session.role==="admin";
   list.forEach(({v,s})=>{
+    const id=v.no??v.id;
     const dTxt=s.days<0?`逾期 ${Math.abs(s.days)} <small>天</small>`:`${s.days} <small>天</small>`;
     const valid=isDate(v.validDate)?v.validDate:`<span class="tag-exempt">${v.validDate||"—"}</span>`;
-    const ext=isDate(v.extinguisherExpiry)
-      ? `${v.extinguisherExpiry}${extWarn(v)?' <span class="pill p-urg" style="padding:2px 7px">需更換</span>':''}`
-      : '<span class="sub">—</span>';
-    const step=(on,lab,key)=>`<span class="step ${on?'on':''} ${admin?'click':''}" ${admin?`onclick="toggleStep(${v.no??v.id},'${key}')"`:''}>${lab}</span>`;
+    const ext=isDate(v.extinguisherExpiry)?`${v.extinguisherExpiry}${extWarn(v)?' <span class="pill p-urg" style="padding:2px 7px">需更換</span>':''}`:'<span class="sub">—</span>';
+    const step=(on,lab,key)=>`<span class="step ${on?'on':''} ${admin?'click':''}" ${admin?`onclick="toggleStep(${id},'${key}')"`:''}>${lab}</span>`;
     const prog=`<div class="prog">${step(v.notified,'通知','notified')}${step(v.secondNotice,'二次','secondNotice')}${step(v.licenseSent,'行照寄','licenseSent')}${step(v.licenseReturned,'行照收','licenseReturned')}</div>`;
-    const id=v.no??v.id;
+    const acts=admin?`<div class="row-act">
+      <button class="icon-btn mail" title="寄送通知" onclick="openMail(${id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></button>
+      <button class="icon-btn" title="編輯" onclick="openModal(${id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+      <button class="icon-btn del" title="刪除" onclick="delVehicle(${id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button></div>`:'';
     const tr=document.createElement("tr");
     tr.innerHTML=`<td><div class="plate">${v.plate}</div><div class="sub">${v.type||""}</div></td>
       <td><span class="stn">${v.station||"—"}</span></td>
       <td>${v.inspDate||"—"}</td><td><span class="days">${dTxt}</span></td>
       <td>${valid}</td><td>${ext}</td>
       <td><span class="pill p-${s.key}">${s.label}</span></td>
-      <td>${prog}</td>
-      <td>${admin?`<div class="row-act">
-        <button class="icon-btn" title="編輯" onclick="openModal(${id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
-        <button class="icon-btn del" title="刪除" onclick="delVehicle(${id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button></div>`:''}</td>`;
+      <td>${prog}</td><td>${acts}</td>`;
     tb.appendChild(tr);
   });
 }
 function vget(id){return vehicles.find(v=>(v.no??v.id)===id);}
-function toggleStep(id,key){
-  if(session.role!=="admin")return;
-  const v=vget(id);v[key]=!v[key];
-  addLog("通知",`${v.plate}・${({notified:'通知',secondNotice:'二次通知',licenseSent:'行照寄出',licenseReturned:'行照收回'})[key]} ${v[key]?'✓':'取消'}`);
-  render();
-}
-function renderLog(){
-  const w=$("logwrap");
-  if(!auditLog.length){w.innerHTML='<div class="empty">尚無紀錄</div>';return;}
-  w.innerHTML=auditLog.map(l=>`<div class="log-item"><div class="log-time">${fmt(l.time)}</div><div class="log-user">${l.user}</div><div><span class="act-tag act-${l.action}">${l.action}</span> ${l.detail?`<span class="sub">${l.detail}</span>`:""}</div></div>`).join("");
-}
+function toggleStep(id,key){if(session.role!=="admin")return;const v=vget(id);v[key]=!v[key];
+  addLog("通知",`${v.plate}・${({notified:'通知',secondNotice:'二次通知',licenseSent:'行照寄出',licenseReturned:'行照收回'})[key]} ${v[key]?'✓':'取消'}`);render();}
+function renderLog(){const w=$("logwrap");if(!auditLog.length){w.innerHTML='<div class="empty">尚無紀錄</div>';return;}
+  w.innerHTML=auditLog.map(l=>`<div class="log-item"><div class="log-time">${fmt(l.time)}</div><div class="log-user">${l.user}</div><div><span class="act-tag act-${l.action}">${l.action}</span> ${l.detail?`<span class="sub">${l.detail}</span>`:""}</div></div>`).join("");}
+
+/* ---- 寄送通知 ---- */
+function openMail(id){const v=vget(id);mailId=id;const s=statusOf(v);
+  const left=s.days<0?`已逾期 ${Math.abs(s.days)} 天`:`剩餘 ${s.days} 天`;
+  $("mail-info").innerHTML=`車號 <b>${v.plate}</b>（${v.type||""}）　站所 <b>${v.station||"—"}</b><br>指定檢驗日期 <b>${v.inspDate||"—"}</b>　${left}`;
+  $("mail-to").value="";
+  $("mail-subj").value=`【驗車提醒】${v.plate}（${v.station||""}）指定檢驗日期 ${v.inspDate||""}`;
+  $("mail-body").value=`您好：\n\n貴站車輛 ${v.plate}（${v.type||""}）指定檢驗日期為 ${v.inspDate||""}，${left}，請安排辦理定期驗車。\n提醒：驗車前請確認滅火器尚有 30 天以上效期，以免影響驗車結果。\n\n車隊驗車提醒系統`;
+  $("maskM").classList.remove("hide");}
+function closeMail(){$("maskM").classList.add("hide");mailId=null;}
+function sendMail(){const v=vget(mailId);const to=$("mail-to").value.trim();
+  if(!to){alert("請填寫收件者");return;}
+  const url=`mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent($("mail-subj").value)}&body=${encodeURIComponent($("mail-body").value)}`;
+  window.location.href=url;            // 開啟使用者的郵件程式，由本人確認後寄出
+  v.notified=true;
+  addLog("通知",`${v.plate}・寄送通知 → ${to}`);
+  closeMail();render();}
+
+/* ---- 車輛新增/編輯 ---- */
 function toggleExempt(){const c=$("m-exempt").checked;$("m-valid").disabled=c;if(c)$("m-valid").value="";}
-function openModal(id=null){
-  editingId=id;
+function openModal(id=null){editingId=id;
   if(id!=null){const v=vget(id);$("modal-title").textContent="編輯車輛";
     $("m-plate").value=v.plate;$("m-type").value=v.type||"";$("m-station").value=v.station||"";
     $("m-insp").value=isDate(v.inspDate)?v.inspDate:"";
     const ex=v.validDate==="免定換";$("m-exempt").checked=ex;$("m-valid").disabled=ex;$("m-valid").value=isDate(v.validDate)?v.validDate:"";
     $("m-ext").value=isDate(v.extinguisherExpiry)?v.extinguisherExpiry:"";$("m-note").value=v.note||"";
   }else{$("modal-title").textContent="新增車輛";["m-plate","m-type","m-station","m-insp","m-valid","m-ext","m-note"].forEach(i=>$(i).value="");$("m-exempt").checked=false;$("m-valid").disabled=false;}
-  $("mask").classList.remove("hide");
-}
+  $("mask").classList.remove("hide");}
 function closeModal(){$("mask").classList.add("hide");editingId=null;}
-function saveVehicle(){
-  const d={plate:$("m-plate").value.trim(),type:$("m-type").value.trim(),station:$("m-station").value.trim(),
-    inspDate:$("m-insp").value,validDate:$("m-exempt").checked?"免定換":$("m-valid").value,
-    extinguisherExpiry:$("m-ext").value||null,note:$("m-note").value.trim()};
+function saveVehicle(){const d={plate:$("m-plate").value.trim(),type:$("m-type").value.trim(),station:$("m-station").value.trim(),
+    inspDate:$("m-insp").value,validDate:$("m-exempt").checked?"免定換":$("m-valid").value,extinguisherExpiry:$("m-ext").value||null,note:$("m-note").value.trim()};
   if(!d.plate||!d.inspDate){alert("請至少填寫車號與指定檢驗日期");return;}
   if(editingId!=null){Object.assign(vget(editingId),d);addLog("修改",d.plate);}
   else{vehicles.push({no:++nextId,...d,notified:false,secondNotice:false,licenseSent:false,licenseReturned:false});addLog("新增",d.plate);populateFilters();}
-  closeModal();render();
-}
+  closeModal();render();}
 function delVehicle(id){const v=vget(id);if(!confirm(`確定刪除 ${v.plate}？`))return;vehicles=vehicles.filter(x=>(x.no??x.id)!==id);addLog("刪除",v.plate);render();}
+
+/* ---- 帳號權限 ---- */
+function renderAccounts(){const tb=$("acctBody");
+  tb.innerHTML=accounts.map(a=>`<tr>
+    <td class="plate">${a.user}${a.user===session.id?' <span class="sub">（目前登入）</span>':''}</td>
+    <td>${a.name}</td>
+    <td><span class="role-pill ${a.role==='admin'?'role-admin':'role-viewer'}" style="color:${a.role==='admin'?'#0a6f62':'#516067'};background:${a.role==='admin'?'#e7f6ee':'#eef2f3'}">${a.role==='admin'?'管理員':'檢視者'}</span></td>
+    <td><div class="row-act">
+      <button class="icon-btn" title="編輯" onclick="openAcct('${a.user}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+      <button class="icon-btn del" title="刪除" onclick="delAcct('${a.user}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+    </div></td></tr>`).join("");}
+function openAcct(user=null){editingAcct=user;
+  if(user){const a=accounts.find(x=>x.user===user);$("acct-title").textContent="編輯帳號";
+    $("a-user").value=a.user;$("a-user").disabled=true;$("a-name").value=a.name;$("a-pw").value="";$("a-role").value=a.role;
+  }else{$("acct-title").textContent="新增帳號";$("a-user").disabled=false;["a-user","a-name","a-pw"].forEach(i=>$(i).value="");$("a-role").value="viewer";}
+  $("maskA").classList.remove("hide");}
+function closeAcct(){$("maskA").classList.add("hide");editingAcct=null;}
+function saveAcct(){const user=$("a-user").value.trim(),name=$("a-name").value.trim(),pw=$("a-pw").value,role=$("a-role").value;
+  if(!user||!name){alert("請填寫帳號與姓名");return;}
+  if(editingAcct){const a=accounts.find(x=>x.user===editingAcct);a.name=name;a.role=role;if(pw)a.pw=pw;addLog("帳號",`修改 ${user}`);}
+  else{if(accounts.some(x=>x.user===user)){alert("帳號已存在");return;}if(!pw){alert("請設定密碼");return;}
+    accounts.push({user,name,role,pw});addLog("帳號",`新增 ${user}（${role==='admin'?'管理員':'檢視者'}）`);}
+  closeAcct();renderAccounts();}
+function delAcct(user){if(user===session.id){alert("無法刪除目前登入的帳號");return;}
+  if(accounts.filter(a=>a.role==="admin").length<=1&&accounts.find(a=>a.user===user).role==="admin"){alert("至少需保留一個管理員");return;}
+  if(!confirm(`確定刪除帳號 ${user}？`))return;
+  accounts=accounts.filter(a=>a.user!==user);addLog("帳號",`刪除 ${user}`);renderAccounts();}
+
 $("p").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
 loadData();
 </script>
