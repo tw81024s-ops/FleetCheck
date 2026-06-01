@@ -129,6 +129,11 @@
 
   .databadge{font-size:12px;padding:4px 10px;border-radius:20px;font-weight:600}
   .navbadge{margin-left:auto;background:#cf3a3a;color:#fff;font-size:11px;font-weight:700;min-width:20px;height:20px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px}
+  .refresh-btn{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line);color:#33464d;padding:9px 15px;border-radius:10px;font-size:14px;font-weight:600;transition:.15s}
+  .refresh-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .refresh-btn svg{width:16px;height:16px}
+  .refresh-btn.spinning svg{animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
   .pendcard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:0 0 12px;box-shadow:var(--shadow);display:flex;justify-content:space-between;align-items:center;gap:16px}
   .pendcard .meta{font-size:12.5px;color:var(--muted);margin-top:3px}
   .pend-kind{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:6px;background:var(--soon-bg);color:var(--soon);margin-right:8px}
@@ -186,6 +191,7 @@
         <div><h2>車輛總覽</h2><p id="today-label">—</p></div>
         <div style="display:flex;gap:10px;align-items:center">
           <span class="databadge" id="dbbadge"></span>
+          <button class="refresh-btn" id="refreshBtn" onclick="refreshData()" title="重新整理資料"><svg id="refreshIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>重新整理</button>
           <button class="add-btn hide" id="addBtn" onclick="openModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>新增車輛</button>
         </div>
       </div>
@@ -257,14 +263,11 @@
     <label>放置站所</label><input id="m-station" placeholder="NS2">
     <div class="two">
       <div><label>指定檢驗日期</label><input id="m-insp" type="date"></div>
-      <div><label>行照到期日</label><input id="m-license" type="date" onchange="previewDeadline()"></div>
+      <div><label>行照到期日（有效日期）</label><input id="m-valid" type="date" onchange="previewDeadline()"></div>
     </div>
     <div class="hinttext" id="m-deadline-hint" style="margin:-4px 0 4px">最後驗車期限 = 行照到期日 + 1 個月</div>
-    <div class="two">
-      <div><label>有效日期</label><input id="m-valid" type="date"></div>
-      <div><label>滅火器有效期限</label><input id="m-ext" type="date"></div>
-    </div>
-    <div class="ck"><input type="checkbox" id="m-exempt" onchange="toggleExempt()"><label for="m-exempt" style="margin:0">有效日期為「免定換」（無到期日）</label></div>
+    <div class="ck"><input type="checkbox" id="m-exempt" onchange="toggleExempt()"><label for="m-exempt" style="margin:0">行照到期為「免定換」（無到期日）</label></div>
+    <label>滅火器有效期限</label><input id="m-ext" type="date">
     <label>備註</label><input id="m-note" placeholder="">
     <div class="modal-act"><button class="cancel" onclick="closeModal()">取消</button><button class="save" onclick="saveVehicle()">儲存</button></div>
   </div>
@@ -329,11 +332,13 @@ const daysTo=ymd=>Math.round((new Date(ymd)-today)/86400000);
 const isDate=v=>typeof v==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(v);
 function addMonth(ymd){if(!isDate(ymd))return null;const[y,m,d]=ymd.split("-").map(Number);const dt=new Date(y,m,d);const p=n=>String(n).padStart(2,"0");return `${dt.getFullYear()}-${p(dt.getMonth()+1)}-${p(dt.getDate())}`;}
 /* 倒數基準：最後驗車期限(行照到期+1月)優先，沒有則退回指定檢驗日期 */
-function deadlineOf(v){return v.lastDeadline||addMonth(v.licenseExpiry)||v.inspDate;}
+function licDate(v){ // 行照到期日 = 有效日期(validDate)，非日期則用後端的 licenseExpiry
+  return isDate(v.validDate)?v.validDate:(isDate(v.licenseExpiry)?v.licenseExpiry:null);}
+function deadlineOf(v){return v.lastDeadline||addMonth(licDate(v))||v.inspDate;}
 function statusOf(v){const dl=deadlineOf(v);const d=dl?daysTo(dl):9999;
   if(d<0)return{key:"over",label:"已逾期",days:d};if(d<=15)return{key:"urg",label:"15天內",days:d};if(d<=30)return{key:"soon",label:"近期",days:d};return{key:"ok",label:"正常",days:d};}
 /* 待驗車：今天落在「行照到期 ±1 個月」區間內 */
-function inInspWindow(v){if(!isDate(v.licenseExpiry))return false;const lic=daysTo(v.licenseExpiry);return lic>=-30&&lic<=30;}
+function inInspWindow(v){const lic=licDate(v);if(!isDate(lic))return false;const d=daysTo(lic);return d>=-30&&d<=30;}
 function extWarn(v){if(!isDate(v.extinguisherExpiry))return false;const dl=deadlineOf(v);if(!dl)return false;return daysTo(v.extinguisherExpiry)<daysTo(dl)+30;}
 function canEditV(v){if(!me)return false;if(me.role==="hq")return true;return me.stations.indexOf(v.station)>=0;}
 function canAct(){return me&&(me.role!=="station"||true);} // 站所也能操作(但會送審)
@@ -403,6 +408,14 @@ async function enterApp(profile,fresh,resumed){
 }
 function doLogout(){token=null;me=null;vehicles=[];clearToken();$("u").value="";$("p").value="";$("app").classList.add("hide");$("login").classList.remove("hide");}
 
+async function refreshData(){
+  const btn=$("refreshBtn");if(btn)btn.classList.add("spinning");
+  try{ await loadList();
+    if(!$("page-review").classList.contains("hide")) await loadReview();
+    if(!$("page-log").classList.contains("hide")) await loadLog();
+    if(!$("page-acct").classList.contains("hide")) await loadAccounts();
+  }finally{ if(btn)btn.classList.remove("spinning"); }
+}
 async function loadList(){
   try{const r=await api("list",{token});if(r.ok){vehicles=r.vehicles||[];if(r.me)me=r.me;pendingCount=r.pendingCount||0;}else if(r.error){if(/逾時|憑證|未登入/.test(r.error)){doLogout();alert(r.error);return;}alert(r.error);}}
   catch(e){alert("讀取資料失敗");}
@@ -451,7 +464,7 @@ function render(){
     const dTxt=s.days<0?`逾期 ${Math.abs(s.days)} <small>天</small>`:`${s.days} <small>天</small>`;
     const dl=deadlineOf(v);
     const dlCell=isDate(dl)?dl:'<span class="sub">—</span>';
-    const lic=isDate(v.licenseExpiry)?v.licenseExpiry:'<span class="sub">—</span>';
+    const lic=isDate(licDate(v))?licDate(v):(v.validDate==="免定換"?'<span class="tag-exempt">免定換</span>':'<span class="sub">—</span>');
     const ext=isDate(v.extinguisherExpiry)?`${v.extinguisherExpiry}${extWarn(v)?' <span class="pill p-urg" style="padding:2px 7px">需更換</span>':''}`:'<span class="sub">—</span>';
     const step=(on,lab,key)=>`<span class="step ${on?'on':''} ${ed?'click':''}" ${ed?`onclick="toggleStep('${id}','${key}')"`:''}>${lab}</span>`;
     const prog=`<div class="prog">${step(v.notified,'通知','notified')}${step(v.secondNotice,'二次','secondNotice')}${step(v.licenseSent,'行照寄','licenseSent')}${step(v.licenseReturned,'行照收','licenseReturned')}</div>`;
@@ -542,20 +555,20 @@ async function sendMail(){const to=$("mail-to").value.trim();if(!to){alert("請�
   closeMail();await loadList();}
 
 /* ---- 車輛新增/編輯 ---- */
-function previewDeadline(){const dl=addMonth($("m-license").value);$("m-deadline-hint").innerHTML=dl?`最後驗車期限 = <b>${dl}</b>（行照到期 +1 個月）`:"最後驗車期限 = 行照到期日 + 1 個月";}
+function previewDeadline(){const dl=addMonth($("m-valid").value);$("m-deadline-hint").innerHTML=dl?`最後驗車期限 = <b>${dl}</b>（行照到期 +1 個月）`:"最後驗車期限 = 行照到期日 + 1 個月";}
 function toggleExempt(){const c=$("m-exempt").checked;$("m-valid").disabled=c;if(c)$("m-valid").value="";}
 function openModal(id=null){editingId=id;
   if(id!=null){const v=vget(id);if(!canEditV(v))return;$("modal-title").textContent="編輯車輛";
     $("m-plate").value=v.plate;$("m-type").value=v.type||"";$("m-station").value=v.station||"";
-    $("m-insp").value=isDate(v.inspDate)?v.inspDate:"";$("m-license").value=isDate(v.licenseExpiry)?v.licenseExpiry:"";
+    $("m-insp").value=isDate(v.inspDate)?v.inspDate:"";
     const ex=v.validDate==="免定換";$("m-exempt").checked=ex;$("m-valid").disabled=ex;$("m-valid").value=isDate(v.validDate)?v.validDate:"";
     $("m-ext").value=isDate(v.extinguisherExpiry)?v.extinguisherExpiry:"";$("m-note").value=v.note||"";
-  }else{$("modal-title").textContent="新增車輛";["m-plate","m-type","m-station","m-insp","m-license","m-valid","m-ext","m-note"].forEach(i=>$(i).value="");$("m-exempt").checked=false;$("m-valid").disabled=false;
+  }else{$("modal-title").textContent="新增車輛";["m-plate","m-type","m-station","m-insp","m-valid","m-ext","m-note"].forEach(i=>$(i).value="");$("m-exempt").checked=false;$("m-valid").disabled=false;
     if(me.role==="supervisor"&&me.stations.length===1)$("m-station").value=me.stations[0];}
   previewDeadline();$("mask").classList.remove("hide");}
 function closeModal(){$("mask").classList.add("hide");editingId=null;}
 async function saveVehicle(){const d={no:editingId,plate:$("m-plate").value.trim(),type:$("m-type").value.trim(),station:$("m-station").value.trim(),
-    inspDate:$("m-insp").value,licenseExpiry:$("m-license").value||"",validDate:$("m-exempt").checked?"免定換":$("m-valid").value,extinguisherExpiry:$("m-ext").value||"",note:$("m-note").value.trim()};
+    inspDate:$("m-insp").value,validDate:$("m-exempt").checked?"免定換":$("m-valid").value,extinguisherExpiry:$("m-ext").value||"",note:$("m-note").value.trim()};
   if(!d.plate){alert("請至少填寫車號");return;}
   const r=await api("saveVehicle",{token,vehicle:d});if(!r.ok){alert(r.error||"儲存失敗");return;}
   closeModal();afterSubmit(r);await loadList();}
