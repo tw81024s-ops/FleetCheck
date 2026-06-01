@@ -191,15 +191,15 @@
       </div>
       <div class="cards">
         <button class="stat over" data-f="over" onclick="setFilter('over')"><div class="bar"></div><div class="lab">已逾期</div><div class="num" id="c-over">0</div><span class="go">點擊查看 ›</span></button>
-        <button class="stat urg" data-f="urg" onclick="setFilter('urg')"><div class="bar"></div><div class="lab">5 天內到期</div><div class="num" id="c-urg">0</div><span class="go">點擊查看 ›</span></button>
-        <button class="stat soon" data-f="soon" onclick="setFilter('soon')"><div class="bar"></div><div class="lab">30 天內到期</div><div class="num" id="c-soon">0</div><span class="go">點擊查看 ›</span></button>
+        <button class="stat urg" data-f="urg" onclick="setFilter('urg')"><div class="bar"></div><div class="lab">15 天內最後期限</div><div class="num" id="c-urg">0</div><span class="go">點擊查看 ›</span></button>
+        <button class="stat soon" data-f="due" onclick="setFilter('due')"><div class="bar"></div><div class="lab">待驗車數量</div><div class="num" id="c-soon">0</div><span class="go">點擊查看 ›</span></button>
         <button class="stat tot" data-f="all" onclick="setFilter('all')"><div class="bar"></div><div class="lab">車輛總數</div><div class="num" id="c-tot">0</div><span class="go">全部 ›</span></button>
       </div>
       <div class="toolbar">
         <button class="chip active" data-f="all" onclick="setFilter('all')">全部</button>
         <button class="chip" data-f="over" onclick="setFilter('over')">逾期</button>
-        <button class="chip" data-f="urg" onclick="setFilter('urg')">5天內</button>
-        <button class="chip" data-f="soon" onclick="setFilter('soon')">30天內</button>
+        <button class="chip" data-f="urg" onclick="setFilter('urg')">15天內</button>
+        <button class="chip" data-f="due" onclick="setFilter('due')">待驗車</button>
         <select class="tsel" id="fStation" onchange="render()"><option value="">所有站所</option></select>
         <select class="tsel" id="fType" onchange="render()"><option value="">所有車種</option></select>
         <span class="grow"></span>
@@ -331,7 +331,9 @@ function addMonth(ymd){if(!isDate(ymd))return null;const[y,m,d]=ymd.split("-").m
 /* 倒數基準：最後驗車期限(行照到期+1月)優先，沒有則退回指定檢驗日期 */
 function deadlineOf(v){return v.lastDeadline||addMonth(v.licenseExpiry)||v.inspDate;}
 function statusOf(v){const dl=deadlineOf(v);const d=dl?daysTo(dl):9999;
-  if(d<0)return{key:"over",label:"已逾期",days:d};if(d<=5)return{key:"urg",label:"5天內",days:d};if(d<=30)return{key:"soon",label:"30天內",days:d};return{key:"ok",label:"正常",days:d};}
+  if(d<0)return{key:"over",label:"已逾期",days:d};if(d<=15)return{key:"urg",label:"15天內",days:d};if(d<=30)return{key:"soon",label:"近期",days:d};return{key:"ok",label:"正常",days:d};}
+/* 待驗車：今天落在「行照到期 ±1 個月」區間內 */
+function inInspWindow(v){if(!isDate(v.licenseExpiry))return false;const lic=daysTo(v.licenseExpiry);return lic>=-30&&lic<=30;}
 function extWarn(v){if(!isDate(v.extinguisherExpiry))return false;const dl=deadlineOf(v);if(!dl)return false;return daysTo(v.extinguisherExpiry)<daysTo(dl)+30;}
 function canEditV(v){if(!me)return false;if(me.role==="hq")return true;return me.stations.indexOf(v.station)>=0;}
 function canAct(){return me&&(me.role!=="station"||true);} // 站所也能操作(但會送審)
@@ -355,19 +357,31 @@ async function doLogin(){
   try{
     const r=await api("login",{user:u,pw:p});
     if(!r.ok){$("err").textContent=r.error||"登入失敗";return;}
-    token=r.token;try{localStorage.setItem(TOKEN_KEY,token);}catch(e){}
+    token=r.token;saveToken(token);
     await enterApp(r.me,true);
   }catch(e){$("err").textContent="無法連線到後端，請確認網址與部署設定";}
 }
+/* token 儲存：優先 localStorage，失敗改用 sessionStorage；都失敗則記憶體 */
+let _memToken=null;
+function saveToken(t){_memToken=t;
+  try{localStorage.setItem(TOKEN_KEY,t);}catch(e){try{sessionStorage.setItem(TOKEN_KEY,t);}catch(e2){console.warn("瀏覽器封鎖儲存，重整將無法保持登入（請改用 http(s):// 開啟）");}}}
+function readToken(){
+  try{const t=localStorage.getItem(TOKEN_KEY);if(t)return t;}catch(e){}
+  try{const t=sessionStorage.getItem(TOKEN_KEY);if(t)return t;}catch(e){}
+  return _memToken;}
+function clearToken(){_memToken=null;
+  try{localStorage.removeItem(TOKEN_KEY);}catch(e){}
+  try{sessionStorage.removeItem(TOKEN_KEY);}catch(e){}}
 /* 重整後自動回復登入 */
 async function tryResume(){
-  let saved=null;try{saved=localStorage.getItem(TOKEN_KEY);}catch(e){}
+  const saved=readToken();
   if(!saved)return;
   token=saved;
   try{const r=await api("list",{token});
     if(r.ok&&r.me){vehicles=r.vehicles||[];pendingCount=r.pendingCount||0;await enterApp(r.me,false,true);}
-    else{token=null;try{localStorage.removeItem(TOKEN_KEY);}catch(e){}}
-  }catch(e){token=null;}
+    else if(r.error&&/逾時|憑證|未登入|帳號不存在/.test(r.error)){clearToken();token=null;} // 只有後端明確拒絕才登出
+    else{/* 其他錯誤：保留 token，停在登入頁讓使用者重試，不清除 */ token=null;}
+  }catch(e){/* 網路錯誤：不要清除 token，避免一閃就被登出 */ token=saved;}
 }
 async function enterApp(profile,fresh,resumed){
   me=profile;$("err").textContent="";
@@ -387,7 +401,7 @@ async function enterApp(profile,fresh,resumed){
   if(fresh && me.role==="station") showStationAlert();
   if(fresh && isHQ() && pendingCount>0) {/* 提示在看板上方 notice 呈現 */}
 }
-function doLogout(){token=null;me=null;vehicles=[];try{localStorage.removeItem(TOKEN_KEY);}catch(e){}$("u").value="";$("p").value="";$("app").classList.add("hide");$("login").classList.remove("hide");}
+function doLogout(){token=null;me=null;vehicles=[];clearToken();$("u").value="";$("p").value="";$("app").classList.add("hide");$("login").classList.remove("hide");}
 
 async function loadList(){
   try{const r=await api("list",{token});if(r.ok){vehicles=r.vehicles||[];if(r.me)me=r.me;pendingCount=r.pendingCount||0;}else if(r.error){if(/逾時|憑證|未登入/.test(r.error)){doLogout();alert(r.error);return;}alert(r.error);}}
@@ -414,9 +428,9 @@ function setFilter(f){filter=f;
   go("fleet");render();}
 
 function render(){
-  let over=0,urg=0,soon=0;
-  vehicles.forEach(v=>{const s=statusOf(v);if(s.key==="over")over++;else if(s.key==="urg")urg++;else if(s.key==="soon")soon++;});
-  $("c-over").textContent=over;$("c-urg").textContent=urg;$("c-soon").textContent=soon;$("c-tot").textContent=vehicles.length;
+  let over=0,urg=0,due=0;
+  vehicles.forEach(v=>{const s=statusOf(v);if(s.key==="over")over++;else if(s.key==="urg")urg++;if(inInspWindow(v))due++;});
+  $("c-over").textContent=over;$("c-urg").textContent=urg;$("c-soon").textContent=due;$("c-tot").textContent=vehicles.length;
   $("dbbadge").className="databadge db-live";$("dbbadge").textContent="● 已連線 Google Sheets";
   if(isHQ()&&pendingCount>0){
     $("notice").innerHTML=`<span style="color:#cf3a3a;font-weight:700">● 有 ${pendingCount} 筆變更待核可</span>　<a href="#" onclick="go('review');return false;" style="color:#0d8b7a;font-weight:600">前往審核 ›</a>`;
@@ -425,7 +439,8 @@ function render(){
   }
   const fS=$("fStation").value,fT=$("fType").value,q=$("fSearch").value.trim().toUpperCase();
   let list=vehicles.map(v=>({v,s:statusOf(v)}));
-  if(filter!=="all")list=list.filter(x=>x.s.key===filter);
+  if(filter==="due")list=list.filter(x=>inInspWindow(x.v));
+  else if(filter!=="all")list=list.filter(x=>x.s.key===filter);
   if(fS)list=list.filter(x=>x.v.station===fS);
   if(fT)list=list.filter(x=>x.v.type===fT);
   if(q)list=list.filter(x=>(x.v.plate||"").toUpperCase().includes(q));
@@ -458,7 +473,7 @@ async function toggleStep(id,key){const v=vget(id);if(!canEditV(v))return;const 
 
 /* ---- 站所登入提示 ---- */
 function showStationAlert(){
-  const list=vehicles.map(v=>({v,s:statusOf(v)})).filter(x=>x.s.days<=30).sort((a,b)=>a.s.days-b.s.days);
+  const list=vehicles.map(v=>({v,s:statusOf(v)})).filter(x=>x.s.days<=15||inInspWindow(x.v)).sort((a,b)=>a.s.days-b.s.days);
   if(!list.length){return;} // 沒有近期到期就不打擾
   $("alert-info").innerHTML=`站所 <b>${me.stations.join("、")}</b>　以下車輛即將到最後驗車期限，請盡快安排：`;
   $("alert-list").innerHTML=list.map(({v,s})=>{
