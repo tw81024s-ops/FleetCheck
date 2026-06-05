@@ -214,7 +214,7 @@
       <div class="table-wrap">
         <table>
           <thead><tr>
-            <th>車號 / 車種</th><th>站所</th><th>指定檢驗日期</th><th>剩餘</th>
+            <th>車號 / 車種</th><th>歸屬站所/單位</th><th>放置位置</th><th>指定檢驗日期</th><th>剩餘</th>
             <th>最後驗車期限</th><th>行照到期</th><th>滅火器效期</th><th>狀態</th><th>通知進度</th><th></th>
           </tr></thead>
           <tbody id="tbody"></tbody>
@@ -260,7 +260,10 @@
       <div><label>車號</label><input id="m-plate" placeholder="KPC-0276"></div>
       <div><label>車種</label><input id="m-type" placeholder="1.9T / 5T / 8T"></div>
     </div>
-    <label>放置站所</label><input id="m-station" placeholder="NS2">
+    <div class="two">
+      <div><label>歸屬站所/單位</label><input id="m-station" placeholder="NS2"></div>
+      <div><label>放置位置</label><input id="m-location" placeholder="例：進紘保養廠"></div>
+    </div>
     <div class="two">
       <div><label>指定檢驗日期</label><input id="m-insp" type="date"></div>
       <div><label>行照到期日（有效日期）</label><input id="m-valid" type="date" onchange="previewDeadline()"></div>
@@ -474,6 +477,7 @@ function render(){
     const tr=document.createElement("tr");
     tr.innerHTML=`<td><div class="plate">${v.plate}</div><div class="sub">${v.type||""}</div></td>
       <td><span class="stn">${v.station||"—"}</span></td>
+      <td>${v.location?v.location:'<span class="sub">—</span>'}</td>
       <td>${v.inspDate||"—"}</td><td><span class="days">${dTxt}</span></td>
       <td>${dlCell}</td><td>${lic}</td><td>${ext}</td>
       <td><span class="pill p-${s.key}">${s.label}</span></td>
@@ -525,7 +529,8 @@ function describePending(it){
   if(it.kind==="通知進度")return `${p.label}：${p.stepVal?"勾選 ✓":"取消"}`;
   if(it.kind==="刪除車輛")return `刪除車輛 ${p.plate||it.plate}`;
   const f=[];
-  if(p.station)f.push("站所 "+p.station);
+  if(p.station)f.push("歸屬 "+p.station);
+  if(p.location)f.push("放置 "+p.location);
   if(p.type)f.push("車種 "+p.type);
   if(p.inspDate)f.push("指定檢驗 "+p.inspDate);
   if(p.licenseExpiry)f.push("行照到期 "+p.licenseExpiry);
@@ -562,12 +567,12 @@ function openModal(id=null){editingId=id;
     $("m-plate").value=v.plate;$("m-type").value=v.type||"";$("m-station").value=v.station||"";
     $("m-insp").value=isDate(v.inspDate)?v.inspDate:"";
     const ex=v.validDate==="免定換";$("m-exempt").checked=ex;$("m-valid").disabled=ex;$("m-valid").value=isDate(v.validDate)?v.validDate:"";
-    $("m-ext").value=isDate(v.extinguisherExpiry)?v.extinguisherExpiry:"";$("m-note").value=v.note||"";
-  }else{$("modal-title").textContent="新增車輛";["m-plate","m-type","m-station","m-insp","m-valid","m-ext","m-note"].forEach(i=>$(i).value="");$("m-exempt").checked=false;$("m-valid").disabled=false;
+    $("m-ext").value=isDate(v.extinguisherExpiry)?v.extinguisherExpiry:"";$("m-note").value=v.note||"";$("m-location").value=v.location||"";
+  }else{$("modal-title").textContent="新增車輛";["m-plate","m-type","m-station","m-location","m-insp","m-valid","m-ext","m-note"].forEach(i=>$(i).value="");$("m-exempt").checked=false;$("m-valid").disabled=false;
     if(me.role==="supervisor"&&me.stations.length===1)$("m-station").value=me.stations[0];}
   previewDeadline();$("mask").classList.remove("hide");}
 function closeModal(){$("mask").classList.add("hide");editingId=null;}
-async function saveVehicle(){const d={no:editingId,plate:$("m-plate").value.trim(),type:$("m-type").value.trim(),station:$("m-station").value.trim(),
+async function saveVehicle(){const d={no:editingId,plate:$("m-plate").value.trim(),type:$("m-type").value.trim(),station:$("m-station").value.trim(),location:$("m-location").value.trim(),
     inspDate:$("m-insp").value,validDate:$("m-exempt").checked?"免定換":$("m-valid").value,extinguisherExpiry:$("m-ext").value||"",note:$("m-note").value.trim()};
   if(!d.plate){alert("請至少填寫車號");return;}
   const r=await api("saveVehicle",{token,vehicle:d});if(!r.ok){alert(r.error||"儲存失敗");return;}
